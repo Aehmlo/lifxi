@@ -1,4 +1,5 @@
 /// Represents a LIFX product.
+#[allow(missing_docs)]
 pub enum Product {
     Original1000,
     Color650,

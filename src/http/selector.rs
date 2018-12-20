@@ -273,6 +273,7 @@ impl PureSelect for Zoned {}
 
 /// Enables randomization of non-randomized selectors.
 pub trait Randomize<T: PureSelect> {
+    /// Chooses a random element from the set of matching devices.
     fn random(self) -> Random<T>;
 }
 

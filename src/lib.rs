@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 //! Control interface for LIFX light bulbs via (eventually LAN and) the internet.
 
 #[macro_use]

@@ -7,6 +7,7 @@ use crate::http::{
 use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
 
+/// The result type for all requests made with the client.
 pub type Result = ::std::result::Result<reqwest::Response, reqwest::Error>;
 
 /// The crux of the HTTP API. Start here.
@@ -93,45 +94,6 @@ where
     }
 }
 
-impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a, ()> {
-    fn from(toggle: Toggle<'a, T>) -> Self {
-        Self {
-            client: toggle.parent.client,
-            path: format!("/lights/{}/toggle", toggle.parent.selector),
-            body: (),
-            method: Method::POST,
-        }
-    }
-}
-
-impl<'a, T: Select> From<&SetState<'a, T>> for Request<'a, State> {
-    fn from(state: &SetState<'a, T>) -> Self {
-        Self {
-            client: state.parent.client,
-            path: format!("/lights/{}/state", state.parent.selector),
-            body: state.new.clone(),
-            method: Method::PUT,
-        }
-    }
-}
-
-impl<'a, T: Select> From<&ChangeState<'a, T>> for Request<'a, StateChange> {
-    fn from(delta: &ChangeState<'a, T>) -> Self {
-        Self {
-            client: delta.parent.client,
-            path: format!("/lights/{}/state/delta", delta.parent.selector),
-            body: delta.change.clone(),
-            method: Method::POST,
-        }
-    }
-}
-
-impl<'a> From<&Activate<'a>> for Request<'a, String> {
-    fn from(activate: &Activate<'a>) -> Self {
-        unimplemented!()
-    }
-}
-
 /// A scoped request that can be used to get or set light states.
 ///
 /// Created by [`Client::select`](struct.Client.html#method.select).
@@ -152,6 +114,17 @@ impl<'a, T: Select> Toggle<'a, T> {
             client: self.parent.client,
             path: format!("/lights/{}/toggle", self.parent.selector),
             body: duration.into(),
+            method: Method::POST,
+        }
+    }
+}
+
+impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a, ()> {
+    fn from(toggle: Toggle<'a, T>) -> Self {
+        Self {
+            client: toggle.parent.client,
+            path: format!("/lights/{}/toggle", toggle.parent.selector),
+            body: (),
             method: Method::POST,
         }
     }
@@ -192,6 +165,17 @@ impl<'a, T: Select> SetState<'a, T> {
     pub fn send(&self) -> Result {
         let request: Request<State> = self.into();
         request.send()
+    }
+}
+
+impl<'a, T: Select> From<&SetState<'a, T>> for Request<'a, State> {
+    fn from(state: &SetState<'a, T>) -> Self {
+        Self {
+            client: state.parent.client,
+            path: format!("/lights/{}/state", state.parent.selector),
+            body: state.new.clone(),
+            method: Method::PUT,
+        }
     }
 }
 
@@ -241,6 +225,17 @@ impl<'a, T: Select> ChangeState<'a, T> {
     pub fn send(&self) -> Result {
         let request: Request<StateChange> = self.into();
         request.send()
+    }
+}
+
+impl<'a, T: Select> From<&ChangeState<'a, T>> for Request<'a, StateChange> {
+    fn from(delta: &ChangeState<'a, T>) -> Self {
+        Self {
+            client: delta.parent.client,
+            path: format!("/lights/{}/state/delta", delta.parent.selector),
+            body: delta.change.clone(),
+            method: Method::POST,
+        }
     }
 }
 
@@ -304,6 +299,7 @@ impl<'a> Scenes<'a> {
     }
 }
 
+/// A configurable request for activating a specified scene.
 pub struct Activate<'a> {
     parent: &'a Scenes<'a>,
     uuid: String,
@@ -329,5 +325,11 @@ impl<'a> Activate<'a> {
     pub fn overwrite(&'a mut self, state: State) -> &'a mut Self {
         self.overrides = Some(state);
         self
+    }
+}
+
+impl<'a> From<&Activate<'a>> for Request<'a, String> {
+    fn from(activate: &Activate<'a>) -> Self {
+        unimplemented!()
     }
 }
