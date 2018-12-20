@@ -32,6 +32,14 @@ impl Client {
             selector,
         }
     }
+    /// Creates a request to validate the given color.
+    pub fn validate<'a>(&'a self, color: &ColorSetting) -> Request<'a> {
+        Request {
+            client: self,
+            path: format!("/color?string={}", color),
+            body: None,
+        }
+    }
 }
 
 /// Represents a terminal request.
