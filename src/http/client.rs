@@ -196,10 +196,7 @@ impl<'a, T: Select> SetState<'a, T> {
     fn params(&self) -> HashMap<&'static str, String> {
         let mut params = HashMap::new();
         if let Some(power) = self.new.power {
-            params.insert(
-                "power",
-                (if power { "on" } else { "off" }).to_string(),
-            );
+            params.insert("power", (if power { "on" } else { "off" }).to_string());
         }
         if let Some(color) = &self.new.color {
             params.insert("color", format!("{}", color));
@@ -262,10 +259,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     fn params(&self) -> HashMap<&'static str, String> {
         let mut params = HashMap::new();
         if let Some(power) = self.change.power {
-            params.insert(
-                "power",
-                (if power { "on" } else { "off" }).to_string(),
-            );
+            params.insert("power", (if power { "on" } else { "off" }).to_string());
         }
         if let Some(hue) = self.change.hue {
             params.insert("hue", format!("{:.2}", hue));
