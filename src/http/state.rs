@@ -1,7 +1,7 @@
 use std::fmt;
 use std::num::{ParseFloatError, ParseIntError};
 use std::str::FromStr;
-use std::time::Duration;
+use std::time::Duration as StdDuration;
 
 use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 
@@ -375,6 +375,16 @@ impl ColorSetting {
     }
 }
 
+/// A thin wrapper for `std::time::Duration` to aid with {de,}serialization.
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub struct Duration(StdDuration);
+
+impl From<StdDuration> for Duration {
+    fn from(duration: StdDuration) -> Self {
+        Duration(duration)
+    }
+}
+
 /// Encodes a desired final state.
 ///
 /// This struct should only be used directly when using
@@ -391,7 +401,6 @@ pub struct State {
     /// specified in a color setting.
     pub brightness: Option<f32>,
     /// How long the transition should take.
-    #[serde(with = "dsd")]
     pub duration: Option<Duration>,
     /// If appropriate, the desired infrared light level (0–1).
     pub infrared: Option<f32>,
@@ -410,30 +419,22 @@ impl Serialize for ColorSetting {
     }
 }
 
-// TODO: Improve precision.
-mod dsd {
-    use serde::{Deserialize, Deserializer, Serializer};
-    use std::time::Duration;
-    pub fn serialize<S: Serializer>(
-        duration: &Option<Duration>,
-        serializer: S,
-    ) -> Result<S::Ok, S::Error> {
-        if let Some(time) = duration {
-            let secs = time.as_secs() as f64;
-            let millis = (time.subsec_millis() as f64) / 1000.0;
-            let t = secs + millis;
-            serializer.serialize_some(&t)
-        } else {
-            serializer.serialize_none()
-        }
+impl Serialize for Duration {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let time = self.0;
+        let secs = time.as_secs() as f64;
+        let millis = (time.subsec_millis() as f64) / 1000.0;
+        let t = secs + millis;
+        serializer.serialize_f64(t)
     }
-    pub fn deserialize<'de, D: Deserializer<'de>>(
-        deserializer: D,
-    ) -> Result<(Option<Duration>), D::Error> {
+}
+
+impl<'de> Deserialize<'de> for Duration {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Duration), D::Error> {
         f64::deserialize(deserializer).map(|f| {
             let secs = f.floor() as u64;
             let millis = ((f % 1.0) * 1000.0) as u32;
-            Some(Duration::new(secs, millis * 1_000_000))
+            Duration(StdDuration::new(secs, millis * 1_000_000))
         })
     }
 }
@@ -489,8 +490,8 @@ impl State {
     /// use lifx::http::{ColorSetting::*, State};
     /// let new: State = State::builder().color(Red).transition(Duration::from_millis(800)).finalize();
     /// ```
-    pub fn transition<'a>(&'a mut self, duration: Duration) -> &'a mut Self {
-        self.duration = Some(duration);
+    pub fn transition<D: Into<Duration>>(&mut self, duration: D) -> &'_ mut Self {
+        self.duration = Some(duration.into());
         self
     }
     /// Builder function to set target maximum infrared level.
@@ -528,7 +529,6 @@ pub struct StateChange {
     /// The desired power state.
     pub power: Option<bool>,
     /// How long the transition should take.
-    #[serde(with = "dsd")]
     pub duration: Option<Duration>,
     /// The desired change in infrared light level.
     pub infrared: Option<f32>,
@@ -555,8 +555,8 @@ impl StateChange {
         self
     }
     /// Builder function to change transition duration.
-    pub fn transition<'a>(&'a mut self, duration: Duration) -> &'a mut Self {
-        self.duration = Some(duration);
+    pub fn transition<'a, T: Into<Duration>>(&'a mut self, duration: T) -> &'a mut Self {
+        self.duration = Some(duration.into());
         self
     }
     /// Builder function to set target change in hue.

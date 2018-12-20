@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-use std::time::Duration;
 
 use crate::http::{
     selector::Select,
-    state::ColorSetting,
-    state::{State, StateChange},
+    state::{ColorSetting, Duration, State, StateChange},
 };
 use reqwest::Client as ReqwestClient;
 
@@ -97,37 +95,19 @@ impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a> {
 
 impl<'a, T: Select> From<SetState<'a, T>> for Request<'a> {
     fn from(state: SetState<'a, T>) -> Self {
-        Self {
-            client: state.parent.client,
-            path: format!("/lights/{}/state", state.parent.selector),
-            body: Some(state.params()),
-        }
+        unimplemented!()
     }
 }
 
 impl<'a, T: Select> From<ChangeState<'a, T>> for Request<'a> {
     fn from(delta: ChangeState<'a, T>) -> Self {
-        Self {
-            client: delta.parent.client,
-            path: format!("/lights/{}/state/delta", delta.parent.selector),
-            body: Some(delta.params()),
-        }
+        unimplemented!()
     }
 }
 
 impl<'a> From<Activate<'a>> for Request<'a> {
     fn from(activate: Activate<'a>) -> Self {
-        let mut body = HashMap::new();
-        if let Some(transition) = activate.transition {
-            body.insert("duration", format!("{}", transition.as_secs()));
-        }
-        // body.insert("ignore".to_string(), activate.ignore_str());
-        // body.insert("overrides".to_string(), format!("{}", state));
-        Self {
-            client: activate.parent.client,
-            path: format!("/scenes/scene_id:{}/activate", activate.uuid),
-            body: Some(body),
-        }
+        unimplemented!()
     }
 }
 
@@ -146,14 +126,8 @@ pub struct Toggle<'a, T: Select> {
 
 impl<'a, T: Select> Toggle<'a, T> {
     /// Sets the transition time for the toggle.
-    pub fn transition(&self, duration: Duration) -> Request<'a> {
-        let mut body = HashMap::new();
-        body.insert("duration", format!("{}", duration.as_secs()));
-        Request {
-            client: self.parent.client,
-            path: format!("/lights/{}", self.parent.selector),
-            body: Some(body),
-        }
+    pub fn transition<D: Into<Duration>>(&self, duration: D) -> Request<'a> {
+        unimplemented!()
     }
 }
 /// A scoped request to uniformly set the state for all selected bulbs.
@@ -179,8 +153,8 @@ impl<'a, T: Select> SetState<'a, T> {
         self
     }
     /// Sets the transition time (duration) for the change.
-    pub fn transition(&'a mut self, duration: Duration) -> &'a mut SetState<'a, T> {
-        self.new.duration = Some(duration);
+    pub fn transition<D: Into<Duration>>(&'a mut self, duration: D) -> &'a mut SetState<'a, T> {
+        self.new.duration = Some(duration.into());
         self
     }
     /// Sets the infrared level, if applicable.
@@ -192,25 +166,6 @@ impl<'a, T: Select> SetState<'a, T> {
     pub fn send(self) {
         let request: Request = self.into();
         request.send()
-    }
-    fn params(&self) -> HashMap<&'static str, String> {
-        let mut params = HashMap::new();
-        if let Some(power) = self.new.power {
-            params.insert("power", (if power { "on" } else { "off" }).to_string());
-        }
-        if let Some(color) = &self.new.color {
-            params.insert("color", format!("{}", color));
-        }
-        if let Some(brightness) = self.new.brightness {
-            params.insert("brightness", format!("{:.2}", brightness));
-        }
-        if let Some(duration) = self.new.duration {
-            params.insert("duration", format!("{}", duration.as_secs()));
-        }
-        if let Some(infrared) = self.new.infrared {
-            params.insert("infrared", format!("{:.2}", infrared));
-        }
-        params
     }
 }
 
@@ -227,8 +182,8 @@ impl<'a, T: Select> ChangeState<'a, T> {
         self
     }
     /// Sets transition duration.
-    pub fn transition(&'a mut self, duration: Duration) -> &'a mut Self {
-        self.change.duration = Some(duration);
+    pub fn transition<D: Into<Duration>>(&'a mut self, duration: D) -> &'a mut Self {
+        self.change.duration = Some(duration.into());
         self
     }
     /// Sets change in hue.
@@ -255,31 +210,6 @@ impl<'a, T: Select> ChangeState<'a, T> {
     pub fn infrared(&'a mut self, ir: f32) -> &'a mut Self {
         self.change.infrared = Some(ir);
         self
-    }
-    fn params(&self) -> HashMap<&'static str, String> {
-        let mut params = HashMap::new();
-        if let Some(power) = self.change.power {
-            params.insert("power", (if power { "on" } else { "off" }).to_string());
-        }
-        if let Some(hue) = self.change.hue {
-            params.insert("hue", format!("{:.2}", hue));
-        }
-        if let Some(saturation) = self.change.saturation {
-            params.insert("saturation", format!("{:.2}", saturation));
-        }
-        if let Some(brightness) = self.change.brightness {
-            params.insert("brightness", format!("{:.2}", brightness));
-        }
-        if let Some(duration) = self.change.duration {
-            params.insert("duration", format!("{}", duration.as_secs()));
-        }
-        if let Some(kelvin) = self.change.kelvin {
-            params.insert("kelvin", format!("{}", kelvin));
-        }
-        if let Some(infrared) = self.change.infrared {
-            params.insert("infrared", format!("{:.2}", infrared));
-        }
-        params
     }
 }
 
