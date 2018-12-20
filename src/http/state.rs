@@ -173,20 +173,36 @@ impl FromStr for ColorSetting {
             "pink" => Ok(Pink),
             "white" => Ok(White),
             hue if hue.starts_with("hue:") => {
-                let hue = hue.split(':').nth(1).unwrap_or("").parse::<u16>();
-                hue.map(Hue).map_err(NonNumericHue)
+                if let Some(spec) = hue.split(':').nth(1) {
+                    let hue = spec.parse();
+                    hue.map(Hue).map_err(NonNumericHue)
+                } else {
+                    Err(NoHue)
+                }
             }
             s if s.starts_with("saturation:") => {
-                let s = s.split(':').nth(1).unwrap_or("").parse::<f32>();
-                s.map(Saturation).map_err(NonNumericSaturation)
+                if let Some(spec) = s.split(':').nth(1) {
+                    let s = spec.parse();
+                    s.map(Saturation).map_err(NonNumericSaturation)
+                } else {
+                    Err(NoSaturation)
+                }
             }
             b if b.starts_with("brightness:") => {
-                let b = b.split(':').nth(1).unwrap_or("").parse::<f32>();
-                b.map(Brightness).map_err(NonNumericBrightness)
+                if let Some(spec) = b.split(':').nth(1) {
+                    let b = spec.parse();
+                    b.map(Brightness).map_err(NonNumericBrightness)
+                } else {
+                    Err(NoBrightness)
+                }
             }
             k if k.starts_with("kelvin:") => {
-                let k = k.split(':').nth(1).unwrap_or("").parse::<u16>();
-                k.map(Kelvin).map_err(NonNumericKelvin)
+                if let Some(spec) = k.split(':').nth(1) {
+                    let k = spec.parse();
+                    k.map(Kelvin).map_err(NonNumericKelvin)
+                } else {
+                    Err(NoKelvin)
+                }
             }
             // Let's revisit this with combinators and Try later.
             r if r.starts_with("rgb:") => {

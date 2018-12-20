@@ -21,7 +21,7 @@ pub struct Client {
 
 impl Client {
     /// Constructs a new `Client` with the given access token.
-    pub fn new<S: ToString>(token: S) -> Self {
+    pub fn new<S: ToString>(token: &S) -> Self {
         Self {
             client: ReqwestClient::new(),
             token: token.to_string(),
