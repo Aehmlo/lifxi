@@ -40,6 +40,10 @@ impl Client {
             body: None,
         }
     }
+    /// Entry point for working with scenes.
+    pub fn scenes<'a>(&'a self) -> Scenes<'a> {
+        Scenes { client: self }
+    }
 }
 
 /// Represents a terminal request.
@@ -102,11 +106,27 @@ impl<'a, T: Select> From<SetState<'a, T>> for Request<'a> {
 }
 
 impl<'a, T: Select> From<ChangeState<'a, T>> for Request<'a> {
-    fn from(state: ChangeState<'a, T>) -> Self {
+    fn from(delta: ChangeState<'a, T>) -> Self {
         Self {
-            client: state.parent.client,
-            path: format!("/lights/{}/state/delta", state.parent.selector),
-            body: Some(state.params()),
+            client: delta.parent.client,
+            path: format!("/lights/{}/state/delta", delta.parent.selector),
+            body: Some(delta.params()),
+        }
+    }
+}
+
+impl<'a> From<Activate<'a>> for Request<'a> {
+    fn from(activate: Activate<'a>) -> Self {
+        let mut body = HashMap::new();
+        if let Some(transition) = activate.transition {
+            body.insert("duration".to_string(), format!("{}", transition.as_secs()));
+        }
+        // body.insert("ignore".to_string(), activate.ignore_str());
+        // body.insert("overrides".to_string(), format!("{}", state));
+        Self {
+            client: activate.parent.client,
+            path: format!("/scenes/scene_id:{}/activate", activate.uuid),
+            body: Some(body),
         }
     }
 }
@@ -296,5 +316,61 @@ where
     /// are off, all will be turned on, but if any are on, all will be turned off.
     pub fn toggle(&'a self) -> Toggle<'a, T> {
         Toggle { parent: self }
+    }
+}
+
+/// A waypoint in working with scenes.
+///
+/// This struct is basically useless; call one of its member methods to do anything interesting.
+pub struct Scenes<'a> {
+    client: &'a Client,
+}
+
+impl<'a> Scenes<'a> {
+    /// Creates a terminal request to list all scenes.
+    pub fn list(&'a self) -> Request<'a> {
+        Request {
+            client: self.client,
+            path: format!("/scenes"),
+            body: None,
+        }
+    }
+    /// Creates a configurable request for activating a specific scene.
+    pub fn activate(&'a self, uuid: String) -> Activate<'a> {
+        Activate {
+            parent: self,
+            uuid,
+            transition: None,
+            ignore: Vec::new(),
+            overrides: None,
+        }
+    }
+}
+
+pub struct Activate<'a> {
+    parent: &'a Scenes<'a>,
+    uuid: String,
+    transition: Option<Duration>,
+    ignore: Vec<String>,
+    overrides: Option<State>,
+}
+
+impl<'a> Activate<'a> {
+    /// Sets the transition time for the scene activation.
+    pub fn transition(&'a mut self, transition: Duration) -> &'a mut Self {
+        self.transition = Some(transition);
+        self
+    }
+    /// Adds a property to the list of ignored properties when changing.
+    ///
+    /// This method takes a string for now; in later versions, it will be strongly-typed.
+    pub fn ignore(&'a mut self, s: impl Into<String>) -> &'a mut Self {
+        self.ignore.push(s.into());
+        self
+    }
+    /// Sets an overriding state that will take priority over all scene attributes.
+    pub fn overwrite(&'a mut self, state: State) -> &'a mut Self {
+        self.overrides = Some(state);
+        self
     }
 }
