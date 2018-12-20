@@ -129,6 +129,7 @@ impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a, ()> {
         }
     }
 }
+
 /// A scoped request to uniformly set the state for all selected bulbs.
 pub struct SetState<'a, T: Select> {
     parent: &'a Selected<'a, T>,
@@ -160,11 +161,6 @@ impl<'a, T: Select> SetState<'a, T> {
     pub fn infrared(&'a mut self, ir: f32) -> &'a mut SetState<'a, T> {
         self.new.infrared = Some(ir);
         self
-    }
-    /// Delegates to [`Request::send`](struct.Request.html#method.send).
-    pub fn send(&self) -> Result {
-        let request: Request<State> = self.into();
-        request.send()
     }
 }
 
@@ -221,11 +217,6 @@ impl<'a, T: Select> ChangeState<'a, T> {
         self.change.infrared = Some(ir);
         self
     }
-    /// Delegates to [`Request::send`](struct.Request.html#method.send).
-    pub fn send(&self) -> Result {
-        let request: Request<StateChange> = self.into();
-        request.send()
-    }
 }
 
 impl<'a, T: Select> From<&ChangeState<'a, T>> for Request<'a, StateChange> {
@@ -259,6 +250,13 @@ where
             new: State::default(),
         }
     }
+    /// Creates a request to incrementally change state on one or more lights.
+    pub fn change_state(&'a self) -> ChangeState<'a, T> {
+        ChangeState {
+            parent: self,
+            change: StateChange::default(),
+        }
+    }
     /// Creates a request to toggle power to the specified light(s), with an optional transition
     /// time.
     ///
@@ -288,10 +286,10 @@ impl<'a> Scenes<'a> {
         }
     }
     /// Creates a configurable request for activating a specific scene.
-    pub fn activate(&'a self, uuid: String) -> Activate<'a> {
+    pub fn activate<S: ToString>(&'a self, uuid: S) -> Activate<'a> {
         Activate {
             parent: self,
-            uuid,
+            uuid: uuid.to_string(),
             transition: None,
             ignore: Vec::new(),
             overrides: None,
@@ -300,11 +298,17 @@ impl<'a> Scenes<'a> {
 }
 
 /// A configurable request for activating a specified scene.
+#[derive(Serialize)]
 pub struct Activate<'a> {
+    #[serde(skip)]
     parent: &'a Scenes<'a>,
+    #[serde(skip)]
     uuid: String,
+    #[serde(rename = "duration", skip_serializing_if = "Option::is_none")]
     transition: Option<Duration>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
     ignore: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     overrides: Option<State>,
 }
 
@@ -328,8 +332,13 @@ impl<'a> Activate<'a> {
     }
 }
 
-impl<'a> From<&Activate<'a>> for Request<'a, String> {
-    fn from(activate: &Activate<'a>) -> Self {
-        unimplemented!()
+impl<'a, 'b: 'a> From<&'b Activate<'a>> for Request<'a, &Activate<'b>> {
+    fn from(activate: &'b Activate<'a>) -> Self {
+        Request {
+            body: &activate,
+            client: activate.parent.client,
+            method: Method::PUT,
+            path: format!("/scenes/scene_id:{}/activate", activate.uuid),
+        }
     }
 }
