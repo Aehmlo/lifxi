@@ -5,3 +5,4 @@ authors = ["Alex Hamilton <alex.hamilton@ou.edu>"]
 edition = "2018"
 
 [dependencies]
+reqwest = "0.9.5"
