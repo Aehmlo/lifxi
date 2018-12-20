@@ -1,3 +1,5 @@
+use std::string::ToString;
+
 use crate::http::{
     selector::Select,
     state::{ColorSetting, Duration, Power, State, StateChange},
@@ -18,10 +20,10 @@ pub struct Client {
 
 impl Client {
     /// Constructs a new `Client` with the given access token.
-    pub fn new(token: String) -> Self {
+    pub fn new<S: ToString>(token: S) -> Self {
         Self {
             client: ReqwestClient::new(),
-            token,
+            token: token.to_string(),
         }
     }
     /// Specifies the lights upon which to act.
