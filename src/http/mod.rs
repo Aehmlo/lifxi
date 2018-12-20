@@ -2,6 +2,8 @@
 
 mod selector;
 pub use self::selector::*;
-mod color;
-pub use self::color::ColorSetting;
-pub use self::color::Error as ColorValidationError;
+mod state;
+pub use self::state::Error as ColorValidationError;
+pub use self::state::{ColorSetting, State, StateChange};
+mod client;
+pub use self::client::*;
