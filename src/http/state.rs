@@ -385,6 +385,16 @@ impl From<StdDuration> for Duration {
     }
 }
 
+/// A wrapper around a power state to make sure it is serialized properly.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Power(bool);
+
+impl From<bool> for Power {
+    fn from(on: bool) -> Self {
+        Power(on)
+    }
+}
+
 /// Encodes a desired final state.
 ///
 /// This struct should only be used directly when using
@@ -393,15 +403,20 @@ impl From<StdDuration> for Duration {
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct State {
     /// The desired power state, if appropriate.
-    pub power: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub power: Option<Power>,
     /// The desired color setting, if appropriate.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub color: Option<ColorSetting>,
     /// The desired brightness level (0–1), if appropriate. Will take priority over any brightness
     /// specified in a color setting.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub brightness: Option<f32>,
     /// How long the transition should take.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<Duration>,
     /// If appropriate, the desired infrared light level (0–1).
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub infrared: Option<f32>,
 }
 
@@ -437,6 +452,23 @@ impl<'de> Deserialize<'de> for Duration {
         })
     }
 }
+impl Serialize for Power {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let on = self.0;
+        serializer.serialize_str(if on { "on" } else { "off" })
+    }
+}
+
+impl<'de> Deserialize<'de> for Power {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Power), D::Error> {
+        let s = String::deserialize(deserializer)?;
+        if s == "on" {
+            Ok(Power(true))
+        } else {
+            Ok(Power(false))
+        }
+    }
+}
 
 impl State {
     /// Creates a new builder.
@@ -453,8 +485,8 @@ impl State {
     /// use lifx::http::State;
     /// let new: State = State::builder().power(true).transition(Duration::from_millis(800)).finalize();
     /// ```
-    pub fn power(&mut self, on: bool) -> &'_ mut Self {
-        self.power = Some(on);
+    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut Self {
+        self.power = Some(on.into());
         self
     }
     /// Builder function to set target color setting.
@@ -525,18 +557,25 @@ impl State {
 #[derive(Clone, Default, Deserialize, Serialize)]
 pub struct StateChange {
     /// The desired power state.
-    pub power: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub power: Option<Power>,
     /// How long the transition should take.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub duration: Option<Duration>,
     /// The desired change in infrared light level.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub infrared: Option<f32>,
     /// The desired change in hue.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub hue: Option<i16>,
     /// The desired change in saturation.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub saturation: Option<f32>,
     /// The desired change in brightness.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub brightness: Option<f32>,
     /// The desired change in color temperature.
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub kelvin: Option<i16>,
 }
 
@@ -548,8 +587,8 @@ impl StateChange {
         Self::default()
     }
     /// Builder function to change target power state.
-    pub fn power(&mut self, on: bool) -> &'_ mut Self {
-        self.power = Some(on);
+    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut Self {
+        self.power = Some(on.into());
         self
     }
     /// Builder function to change transition duration.

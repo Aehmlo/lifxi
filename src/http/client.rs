@@ -1,6 +1,6 @@
 use crate::http::{
     selector::Select,
-    state::{ColorSetting, Duration, State, StateChange},
+    state::{ColorSetting, Duration, Power, State, StateChange},
 };
 use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
@@ -57,14 +57,19 @@ pub struct Request<'a, U> {
 }
 
 impl<'a, U> Request<'a, U>
-    where U: Serialize,
+where
+    U: Serialize,
 {
     fn send(self) -> Result {
         let token = self.client.token.as_str();
         let client = &self.client.client;
         let url = &format!("https://api.lifx.com/v1{}", self.path);
         let method = self.method;
-        client.request(method, url).bearer_auth(token).json(&self.body).send()
+        client
+            .request(method, url)
+            .bearer_auth(token)
+            .json(&self.body)
+            .send()
     }
 }
 
@@ -157,8 +162,8 @@ pub struct SetState<'a, T: Select> {
 
 impl<'a, T: Select> SetState<'a, T> {
     /// Sets the power state of all selected bulbs.
-    pub fn power(&'a mut self, on: bool) -> &'a mut SetState<'a, T> {
-        self.new.power = Some(on);
+    pub fn power<P: Into<Power>>(&'a mut self, on: P) -> &'a mut SetState<'a, T> {
+        self.new.power = Some(on.into());
         self
     }
     /// Sets the color of all selected bulbs.
@@ -196,8 +201,8 @@ pub struct ChangeState<'a, T: Select> {
 
 impl<'a, T: Select> ChangeState<'a, T> {
     /// Sets target power state.
-    pub fn power(&'a mut self, on: bool) -> &'a mut Self {
-        self.change.power = Some(on);
+    pub fn power<P: Into<Power>>(&'a mut self, on: P) -> &'a mut Self {
+        self.change.power = Some(on.into());
         self
     }
     /// Sets transition duration.
