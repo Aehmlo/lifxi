@@ -52,7 +52,7 @@ impl Client {
 pub struct Request<'a> {
     client: &'a Client,
     path: String,
-    body: Option<HashMap<String, String>>,
+    body: Option<HashMap<&'static str, String>>,
 }
 
 impl<'a> Request<'a> {
@@ -119,7 +119,7 @@ impl<'a> From<Activate<'a>> for Request<'a> {
     fn from(activate: Activate<'a>) -> Self {
         let mut body = HashMap::new();
         if let Some(transition) = activate.transition {
-            body.insert("duration".to_string(), format!("{}", transition.as_secs()));
+            body.insert("duration", format!("{}", transition.as_secs()));
         }
         // body.insert("ignore".to_string(), activate.ignore_str());
         // body.insert("overrides".to_string(), format!("{}", state));
@@ -148,7 +148,7 @@ impl<'a, T: Select> Toggle<'a, T> {
     /// Sets the transition time for the toggle.
     pub fn transition(&self, duration: Duration) -> Request<'a> {
         let mut body = HashMap::new();
-        body.insert("duration".to_string(), format!("{}", duration.as_secs()));
+        body.insert("duration", format!("{}", duration.as_secs()));
         Request {
             client: self.parent.client,
             path: format!("/lights/{}", self.parent.selector),
@@ -193,25 +193,25 @@ impl<'a, T: Select> SetState<'a, T> {
         let request: Request = self.into();
         request.send()
     }
-    fn params(&self) -> HashMap<String, String> {
+    fn params(&self) -> HashMap<&'static str, String> {
         let mut params = HashMap::new();
         if let Some(power) = self.new.power {
             params.insert(
-                "power".to_string(),
+                "power",
                 (if power { "on" } else { "off" }).to_string(),
             );
         }
         if let Some(color) = &self.new.color {
-            params.insert("color".to_string(), format!("{}", color));
+            params.insert("color", format!("{}", color));
         }
         if let Some(brightness) = self.new.brightness {
-            params.insert("brightness".to_string(), format!("{:.2}", brightness));
+            params.insert("brightness", format!("{:.2}", brightness));
         }
         if let Some(duration) = self.new.duration {
-            params.insert("duration".to_string(), format!("{}", duration.as_secs()));
+            params.insert("duration", format!("{}", duration.as_secs()));
         }
         if let Some(infrared) = self.new.infrared {
-            params.insert("infrared".to_string(), format!("{:.2}", infrared));
+            params.insert("infrared", format!("{:.2}", infrared));
         }
         params
     }
@@ -259,31 +259,31 @@ impl<'a, T: Select> ChangeState<'a, T> {
         self.change.infrared = Some(ir);
         self
     }
-    fn params(&self) -> HashMap<String, String> {
+    fn params(&self) -> HashMap<&'static str, String> {
         let mut params = HashMap::new();
         if let Some(power) = self.change.power {
             params.insert(
-                "power".to_string(),
+                "power",
                 (if power { "on" } else { "off" }).to_string(),
             );
         }
         if let Some(hue) = self.change.hue {
-            params.insert("hue".to_string(), format!("{:.2}", hue));
+            params.insert("hue", format!("{:.2}", hue));
         }
         if let Some(saturation) = self.change.saturation {
-            params.insert("saturation".to_string(), format!("{:.2}", saturation));
+            params.insert("saturation", format!("{:.2}", saturation));
         }
         if let Some(brightness) = self.change.brightness {
-            params.insert("brightness".to_string(), format!("{:.2}", brightness));
+            params.insert("brightness", format!("{:.2}", brightness));
         }
         if let Some(duration) = self.change.duration {
-            params.insert("duration".to_string(), format!("{}", duration.as_secs()));
+            params.insert("duration", format!("{}", duration.as_secs()));
         }
         if let Some(kelvin) = self.change.kelvin {
-            params.insert("kelvin".to_string(), format!("{}", kelvin));
+            params.insert("kelvin", format!("{}", kelvin));
         }
         if let Some(infrared) = self.change.infrared {
-            params.insert("infrared".to_string(), format!("{:.2}", infrared));
+            params.insert("infrared", format!("{:.2}", infrared));
         }
         params
     }
