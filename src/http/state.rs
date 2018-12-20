@@ -1,5 +1,9 @@
 use std::fmt;
+use std::num::{ParseFloatError, ParseIntError};
+use std::str::FromStr;
 use std::time::Duration;
+
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 
 /// Specifies the desired color setting of a light.
 ///
@@ -78,10 +82,156 @@ impl fmt::Display for ColorSetting {
             ColorSetting::Kelvin(t) => write!(f, "kelvin:{}", t),
             ColorSetting::Rgb(rgb) => write!(f, "rgb:{},{},{}", rgb[0], rgb[1], rgb[2]),
             ColorSetting::RgbStr(s) => {
-                if s.starts_with("#") {
+                if s.starts_with('#') {
                     write!(f, "{}", s)
                 } else {
                     write!(f, "#{}", s)
+                }
+            }
+        }
+    }
+}
+
+/// Represents an error encountered while deserializing a color.
+pub enum ColorParseError {
+    /// No hue was given.
+    NoHue,
+    /// The hue could not be parsed as an integer.
+    NonNumericHue(ParseIntError),
+    /// No saturation was given.
+    NoSaturation,
+    /// The saturation could not be parsed as a float.
+    NonNumericSaturation(ParseFloatError),
+    /// No brightness was given.
+    NoBrightness,
+    /// The brightness could not be parsed as a float.
+    NonNumericBrightness(ParseFloatError),
+    /// No color temperature was given.
+    NoKelvin,
+    /// The color temperature could not be parsed as an integer.
+    NonNumericKelvin(ParseIntError),
+    /// No red component was given.
+    NoRed,
+    /// The red component could not be parsed as an integer.
+    NonNumericRed(ParseIntError),
+    /// No green component was given.
+    NoGreen,
+    /// The green component could not be parsed as an integer.
+    NonNumericGreen(ParseIntError),
+    /// No blue component was given.
+    NoBlue,
+    /// The blue component could not be parsed as an integer.
+    NonNumericBlue(ParseIntError),
+    /// The string is too short to be an RGB string and was not recognized as a keyword.
+    ShortString,
+    /// The string is too long to be an RGB string and was not recognized as a keyword.
+    LongString,
+}
+
+impl fmt::Display for ColorParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::ColorParseError::*;
+        match self {
+            NoHue => write!(f, "Expected hue after hue: label."),
+            NonNumericHue(e) => write!(f, "Failed to parse hue as integer: {}", e),
+            NoSaturation => write!(f, "Expected saturation after saturation: label."),
+            NonNumericSaturation(e) => write!(f, "Failed to parse saturation as float: {}", e),
+            NoBrightness => write!(f, "Expected brightness after brightness: label."),
+            NonNumericBrightness(e) => write!(f, "Failed to parse brightness as float: {}", e),
+            NoKelvin => write!(f, "Expected color temperature after kelvin: label."),
+            NonNumericKelvin(e) => write!(f, "Failed to parse color temperature as integer: {}", e),
+            NoRed => write!(f, "Expected red component after rgb: label."),
+            NonNumericRed(e) => write!(f, "Failed to parse red component as integer: {}", e),
+            NoGreen => write!(f, "Expected green component after comma."),
+            NonNumericGreen(e) => write!(f, "Failed to parse green component as integer: {}", e),
+            NoBlue => write!(f, "Expected blue component after comma."),
+            NonNumericBlue(e) => write!(f, "Failed to parse blue component as integer: {}", e),
+            ShortString => write!(
+                f,
+                "String is too short to be an RGB string and was not recognized as a keyword."
+            ),
+            LongString => write!(
+                f,
+                "String is too long to be an RGB string and was not recognized as a keyword."
+            ),
+        }
+    }
+}
+
+impl FromStr for ColorSetting {
+    type Err = ColorParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use self::ColorParseError::*;
+        use self::ColorSetting::*;
+        match s {
+            "red" => Ok(Red),
+            "orange" => Ok(Orange),
+            "yellow" => Ok(Yellow),
+            "green" => Ok(Green),
+            "blue" => Ok(Blue),
+            "purple" => Ok(Purple),
+            "pink" => Ok(Pink),
+            "white" => Ok(White),
+            hue if hue.starts_with("hue:") => {
+                let hue = hue.split(':').nth(1).unwrap_or("").parse::<u16>();
+                hue.map(Hue).map_err(NonNumericHue)
+            }
+            s if s.starts_with("saturation:") => {
+                let s = s.split(':').nth(1).unwrap_or("").parse::<f32>();
+                s.map(Saturation).map_err(NonNumericSaturation)
+            }
+            b if b.starts_with("brightness:") => {
+                let b = b.split(':').nth(1).unwrap_or("").parse::<f32>();
+                b.map(Brightness).map_err(NonNumericBrightness)
+            }
+            k if k.starts_with("kelvin:") => {
+                let k = k.split(':').nth(1).unwrap_or("").parse::<u16>();
+                k.map(Kelvin).map_err(NonNumericKelvin)
+            }
+            // Let's revisit this with combinators and Try later.
+            r if r.starts_with("rgb:") => {
+                let mut split = r.split(':');
+                if let Some(parts) = split.nth(1) {
+                    let mut parts = parts.split(',');
+                    if let Some(r) = parts.next() {
+                        if let Some(g) = parts.next() {
+                            if let Some(b) = parts.next() {
+                                match r.parse() {
+                                    Ok(r) => match g.parse() {
+                                        Ok(g) => match b.parse() {
+                                            Ok(b) => Ok(Rgb([r, g, b])),
+                                            Err(e) => Err(NonNumericBlue(e)),
+                                        },
+                                        Err(e) => Err(NonNumericGreen(e)),
+                                    },
+                                    Err(e) => Err(NonNumericRed(e)),
+                                }
+                            } else {
+                                Err(NoBlue)
+                            }
+                        } else {
+                            Err(NoGreen)
+                        }
+                    } else {
+                        Err(NoRed)
+                    }
+                } else {
+                    Err(NoRed)
+                }
+            }
+            s => {
+                if s.starts_with('#') {
+                    match s.len() {
+                        x if x < 7 => Err(ShortString),
+                        7 => Ok(RgbStr(s.to_string())),
+                        _ => Err(LongString),
+                    }
+                } else {
+                    match s.len() {
+                        x if x < 6 => Err(ShortString),
+                        6 => Ok(RgbStr(s.to_string())),
+                        _ => Err(LongString),
+                    }
                 }
             }
         }
@@ -230,7 +380,8 @@ impl ColorSetting {
 /// This struct should only be used directly when using
 /// [`Selected::set_states`](struct.Selected.html#method.set_states), and even then, it is
 /// encouraged to use the builder methods instead of directly constructing a set of changes.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub struct State {
     /// The desired power state, if appropriate.
     pub power: Option<bool>,
@@ -240,9 +391,51 @@ pub struct State {
     /// specified in a color setting.
     pub brightness: Option<f32>,
     /// How long the transition should take.
+    #[serde(with = "dsd")]
     pub duration: Option<Duration>,
     /// If appropriate, the desired infrared light level (0–1).
     pub infrared: Option<f32>,
+}
+
+impl<'de> Deserialize<'de> for ColorSetting {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(ColorSetting), D::Error> {
+        let s = String::deserialize(deserializer)?;
+        s.parse::<ColorSetting>().map_err(DeError::custom)
+    }
+}
+
+impl Serialize for ColorSetting {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+// TODO: Improve precision.
+mod dsd {
+    use serde::{Deserialize, Deserializer, Serializer};
+    use std::time::Duration;
+    pub fn serialize<S: Serializer>(
+        duration: &Option<Duration>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        if let Some(time) = duration {
+            let secs = time.as_secs() as f64;
+            let millis = (time.subsec_millis() as f64) / 1000.0;
+            let t = secs + millis;
+            serializer.serialize_some(&t)
+        } else {
+            serializer.serialize_none()
+        }
+    }
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<(Option<Duration>), D::Error> {
+        f64::deserialize(deserializer).map(|f| {
+            let secs = f.floor() as u64;
+            let millis = ((f % 1.0) * 1000.0) as u32;
+            Some(Duration::new(secs, millis * 1_000_000))
+        })
+    }
 }
 
 impl State {
@@ -329,11 +522,13 @@ impl State {
 /// This struct is intended for use with
 /// [`Selected::change_state`](struct.Selected.html#method.change_state), and it is encouraged to
 /// use the builder methods instead of directly constructing a changeset.
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub struct StateChange {
     /// The desired power state.
     pub power: Option<bool>,
     /// How long the transition should take.
+    #[serde(with = "dsd")]
     pub duration: Option<Duration>,
     /// The desired change in infrared light level.
     pub infrared: Option<f32>,

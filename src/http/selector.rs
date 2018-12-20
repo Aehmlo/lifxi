@@ -1,5 +1,8 @@
 use std::fmt;
 use std::iter::FromIterator;
+use std::str::FromStr;
+
+use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 
 /// Selectors are used to identify one or more lights belonging to a particular account.
 ///
@@ -15,7 +18,7 @@ use std::iter::FromIterator;
 ///
 /// A random device can be chosen from the list of devices matching a selector via
 /// [the `Randomize` trait](trait.Randomize.html).
-#[derive(Clone, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub enum Selector {
     /// All devices on the user's account.
     All,
@@ -57,6 +60,76 @@ impl fmt::Display for Selector {
     }
 }
 
+/// Represents a selector deserialization error.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SelectorParseError {
+    /// The selector was neither "all" nor prefixed with a label.
+    NoLabel,
+    /// The selector contained a label but no following value.
+    NoValue,
+    /// The selector contained an unknown label.
+    UnknownLabel,
+}
+
+impl fmt::Display for SelectorParseError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                SelectorParseError::NoLabel => "Unrecognized selector.",
+                SelectorParseError::NoValue => "No value given for label.",
+                SelectorParseError::UnknownLabel => "Unrecognized label.",
+            }
+        )
+    }
+}
+
+impl FromStr for Selector {
+    type Err = self::SelectorParseError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use self::Selector::*;
+        use self::SelectorParseError::*;
+        match s {
+            "all" => Ok(All),
+            x => {
+                let mut parts = x.split(':');
+                if let Some(label) = parts.next() {
+                    if let Some(value) = parts.next().map(|p| p.trim().to_string()) {
+                        match label {
+                            "label" => Ok(Label(value)),
+                            "id" => Ok(Id(value)),
+                            "group_id" => Ok(GroupId(value)),
+                            "group" => Ok(Group(value)),
+                            "location_id" => Ok(LocationId(value)),
+                            "location" => Ok(Location(value)),
+                            "scene_id" => Ok(SceneId(value)),
+                            _ => Err(UnknownLabel),
+                        }
+                    } else {
+                        Err(NoValue)
+                    }
+                } else {
+                    Err(NoLabel)
+                }
+            }
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for Selector {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Selector), D::Error> {
+        let s = String::deserialize(deserializer)?;
+        s.parse::<Selector>().map_err(DeError::custom)
+    }
+}
+
+impl Serialize for Selector {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
 #[doc(hidden)]
 /// A selector that has been constrained to specific zones.
 pub struct Zoned {
@@ -71,6 +144,12 @@ impl fmt::Display for Zoned {
             write!(f, "|{}", z)?;
         }
         Ok(())
+    }
+}
+
+impl Serialize for Zoned {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&format!("{}", self))
     }
 }
 
@@ -142,6 +221,12 @@ impl<T: PureSelect> fmt::Display for Random<T> {
     }
 }
 
+impl<T: PureSelect> Serialize for Random<T> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
 impl Selector {
     /// Constrains the selector to only match the given zone(s).
     /// ### Examples
@@ -207,5 +292,60 @@ where
     /// ```
     fn random(self) -> Random<T> {
         Random(self)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn serialize() {
+        let selector = Selector::All;
+        assert_eq!(&format!("{}", selector), "all");
+        let selector = Selector::Label("Living Room".to_string());
+        assert_eq!(&format!("{}", selector), "label:Living Room");
+        let selector = Selector::Id("abcd".to_string());
+        assert_eq!(&format!("{}", selector), "id:abcd");
+        let selector = Selector::GroupId("efgh".to_string());
+        assert_eq!(&format!("{}", selector), "group_id:efgh");
+        let selector = Selector::Group("Lounge".to_string());
+        assert_eq!(&format!("{}", selector), "group:Lounge");
+        let selector = Selector::LocationId("ijkl".to_string());
+        assert_eq!(&format!("{}", selector), "location_id:ijkl");
+        let selector = Selector::Location("Summer Home".to_string());
+        assert_eq!(&format!("{}", selector), "location:Summer Home");
+        let selector = Selector::SceneId("mnop".to_string());
+        assert_eq!(&format!("{}", selector), "scene_id:mnop");
+        let selector = Selector::All.zoned(17);
+        assert_eq!(&format!("{}", selector), "all|17");
+        let selector = Selector::All.zoned(255..);
+        assert_eq!(&format!("{}", selector), "all|255");
+        let selector = Selector::All.zoned(18..19);
+        assert_eq!(&format!("{}", selector), "all|18");
+        let selector = Selector::All.zoned(3..=5);
+        assert_eq!(&format!("{}", selector), "all|3|4|5");
+        let selector = Selector::All.zoned(..=2);
+        assert_eq!(&format!("{}", selector), "all|0|1|2");
+        let selector = Selector::All.random();
+        assert_eq!(&format!("{}", selector), "all:random");
+    }
+    #[test]
+    fn deserialize() {
+        let selector = "all".parse();
+        assert_eq!(selector, Ok(Selector::All));
+        let selector = "label:Living Room".parse();
+        assert_eq!(selector, Ok(Selector::Label("Living Room".to_string())));
+        let selector = "id:abcd".parse();
+        assert_eq!(selector, Ok(Selector::Id("abcd".to_string())));
+        let selector = "group_id:efgh".parse();
+        assert_eq!(selector, Ok(Selector::GroupId("efgh".to_string())));
+        let selector = "group:Lounge".parse();
+        assert_eq!(selector, Ok(Selector::Group("Lounge".to_string())));
+        let selector = "location:ijkl".parse();
+        assert_eq!(selector, Ok(Selector::Location("ijkl".to_string())));
+        let selector = "location:Summer Home".parse();
+        assert_eq!(selector, Ok(Selector::Location("Summer Home".to_string())));
+        let selector = "scene_id:mnop".parse();
+        assert_eq!(selector, Ok(Selector::SceneId("mnop".to_string())));
     }
 }
