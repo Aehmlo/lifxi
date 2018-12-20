@@ -1,10 +1,11 @@
-use std::collections::HashMap;
-
 use crate::http::{
     selector::Select,
     state::{ColorSetting, Duration, State, StateChange},
 };
-use reqwest::Client as ReqwestClient;
+use reqwest::{Client as ReqwestClient, Method};
+use serde::Serialize;
+
+pub type Result = ::std::result::Result<reqwest::Response, reqwest::Error>;
 
 /// The crux of the HTTP API. Start here.
 ///
@@ -31,11 +32,12 @@ impl Client {
         }
     }
     /// Creates a request to validate the given color.
-    pub fn validate(&self, color: &ColorSetting) -> Request {
+    pub fn validate(&self, color: &ColorSetting) -> Request<'_, ()> {
         Request {
             client: self,
             path: format!("/color?string={}", color),
-            body: None,
+            body: (),
+            method: Method::GET,
         }
     }
     /// Entry point for working with scenes.
@@ -47,66 +49,78 @@ impl Client {
 /// Represents a terminal request.
 ///
 /// The only thing to be done with this request is send it; no further configuration is possible.
-pub struct Request<'a> {
+pub struct Request<'a, U> {
     client: &'a Client,
     path: String,
-    body: Option<HashMap<&'static str, String>>,
+    body: U,
+    method: Method,
 }
 
-impl<'a> Request<'a> {
-    fn send(self) {
-        let client = self.client;
-        let _ = client.client;
-        let _ = client.token;
-        let _ = self.path;
-        let _ = self.body;
-        unimplemented!()
+impl<'a, U> Request<'a, U>
+    where U: Serialize,
+{
+    fn send(self) -> Result {
+        let token = self.client.token.as_str();
+        let client = &self.client.client;
+        let url = &format!("https://api.lifx.com/v1{}", self.path);
+        let method = self.method;
+        client.request(method, url).bearer_auth(token).json(&self.body).send()
     }
 }
 
 /// Trait for configurable (non-terminal) requests to be sent conveniently.
-pub trait Send {
+pub trait Send<U> {
     /// Sends the request.
-    ///
-    /// Someday, we'll also return the result.
-    fn send(self);
+    fn send(self) -> Result;
 }
 
-impl<'a, T> Send for T
+impl<'a, T, U> Send<U> for T
 where
-    T: Into<Request<'a>>,
+    T: Into<Request<'a, U>>,
+    U: Serialize,
 {
     /// Delegates to [`Request::send`](struct.Request.html#method.send).
-    fn send(self) {
-        let request: Request = self.into();
+    fn send(self) -> Result {
+        let request: Request<U> = self.into();
         request.send()
     }
 }
 
-impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a> {
+impl<'a, T: Select> From<Toggle<'a, T>> for Request<'a, ()> {
     fn from(toggle: Toggle<'a, T>) -> Self {
         Self {
             client: toggle.parent.client,
             path: format!("/lights/{}/toggle", toggle.parent.selector),
-            body: None,
+            body: (),
+            method: Method::POST,
         }
     }
 }
 
-impl<'a, T: Select> From<SetState<'a, T>> for Request<'a> {
-    fn from(state: SetState<'a, T>) -> Self {
-        unimplemented!()
+impl<'a, T: Select> From<&SetState<'a, T>> for Request<'a, State> {
+    fn from(state: &SetState<'a, T>) -> Self {
+        Self {
+            client: state.parent.client,
+            path: format!("/lights/{}/state", state.parent.selector),
+            body: state.new.clone(),
+            method: Method::PUT,
+        }
     }
 }
 
-impl<'a, T: Select> From<ChangeState<'a, T>> for Request<'a> {
-    fn from(delta: ChangeState<'a, T>) -> Self {
-        unimplemented!()
+impl<'a, T: Select> From<&ChangeState<'a, T>> for Request<'a, StateChange> {
+    fn from(delta: &ChangeState<'a, T>) -> Self {
+        Self {
+            client: delta.parent.client,
+            path: format!("/lights/{}/state/delta", delta.parent.selector),
+            body: delta.change.clone(),
+            method: Method::POST,
+        }
     }
 }
 
-impl<'a> From<Activate<'a>> for Request<'a> {
-    fn from(activate: Activate<'a>) -> Self {
+impl<'a> From<&Activate<'a>> for Request<'a, String> {
+    fn from(activate: &Activate<'a>) -> Self {
         unimplemented!()
     }
 }
@@ -126,8 +140,13 @@ pub struct Toggle<'a, T: Select> {
 
 impl<'a, T: Select> Toggle<'a, T> {
     /// Sets the transition time for the toggle.
-    pub fn transition<D: Into<Duration>>(&self, duration: D) -> Request {
-        unimplemented!()
+    pub fn transition<D: Into<Duration>>(&self, duration: D) -> Request<'_, Duration> {
+        Request {
+            client: self.parent.client,
+            path: format!("/lights/{}/toggle", self.parent.selector),
+            body: duration.into(),
+            method: Method::POST,
+        }
     }
 }
 /// A scoped request to uniformly set the state for all selected bulbs.
@@ -163,8 +182,8 @@ impl<'a, T: Select> SetState<'a, T> {
         self
     }
     /// Delegates to [`Request::send`](struct.Request.html#method.send).
-    pub fn send(self) {
-        let request: Request = self.into();
+    pub fn send(&self) -> Result {
+        let request: Request<State> = self.into();
         request.send()
     }
 }
@@ -211,6 +230,11 @@ impl<'a, T: Select> ChangeState<'a, T> {
         self.change.infrared = Some(ir);
         self
     }
+    /// Delegates to [`Request::send`](struct.Request.html#method.send).
+    pub fn send(&self) -> Result {
+        let request: Request<StateChange> = self.into();
+        request.send()
+    }
 }
 
 impl<'a, T> Selected<'a, T>
@@ -218,11 +242,12 @@ where
     T: Select,
 {
     /// Creates a request to get information about the selected lights (including their states).
-    pub fn list(&'a self) -> Request<'a> {
+    pub fn list(&'a self) -> Request<'a, ()> {
         Request {
             client: self.client,
             path: format!("/lights/{}", self.selector),
-            body: None,
+            body: (),
+            method: Method::GET,
         }
     }
     /// Creates a request to set a uniform state on one or more lights.
@@ -252,11 +277,12 @@ pub struct Scenes<'a> {
 
 impl<'a> Scenes<'a> {
     /// Creates a terminal request to list all scenes.
-    pub fn list(&'a self) -> Request<'a> {
+    pub fn list(&'a self) -> Request<'a, ()> {
         Request {
             client: self.client,
             path: "/scenes".to_string(),
-            body: None,
+            body: (),
+            method: Method::GET,
         }
     }
     /// Creates a configurable request for activating a specific scene.
