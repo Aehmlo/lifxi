@@ -391,7 +391,6 @@ impl From<StdDuration> for Duration {
 /// [`Selected::set_states`](struct.Selected.html#method.set_states), and even then, it is
 /// encouraged to use the builder methods instead of directly constructing a set of changes.
 #[derive(Clone, Default, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
 pub struct State {
     /// The desired power state, if appropriate.
     pub power: Option<bool>,
@@ -423,7 +422,7 @@ impl Serialize for Duration {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         let time = self.0;
         let secs = time.as_secs() as f64;
-        let millis = (time.subsec_millis() as f64) / 1000.0;
+        let millis = f64::from(time.subsec_millis()) / 1000.0;
         let t = secs + millis;
         serializer.serialize_f64(t)
     }
@@ -454,7 +453,7 @@ impl State {
     /// use lifx::http::State;
     /// let new: State = State::builder().power(true).transition(Duration::from_millis(800)).finalize();
     /// ```
-    pub fn power<'a>(&'a mut self, on: bool) -> &'a mut Self {
+    pub fn power(&mut self, on: bool) -> &'_ mut Self {
         self.power = Some(on);
         self
     }
@@ -466,7 +465,7 @@ impl State {
     /// use lifx::http::{ColorSetting::*, State};
     /// let new: State = State::builder().color(Red).finalize();
     /// ```
-    pub fn color<'a>(&'a mut self, color: ColorSetting) -> &'a mut Self {
+    pub fn color(&mut self, color: ColorSetting) -> &'_ mut Self {
         self.color = Some(color);
         self
     }
@@ -478,7 +477,7 @@ impl State {
     /// use lifx::http::State;
     /// let new: State = State::builder().brightness(0.7).transition(Duration::from_millis(800)).finalize();
     /// ```
-    pub fn brightness<'a>(&'a mut self, brightness: f32) -> &'a mut Self {
+    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
         self.brightness = Some(brightness);
         self
     }
@@ -501,7 +500,7 @@ impl State {
     /// use lifx::http::State;
     /// let new: State = State::builder().infrared(0.8).finalize();
     /// ```
-    pub fn infrared<'a>(&'a mut self, infrared: f32) -> &'a mut Self {
+    pub fn infrared(&mut self, infrared: f32) -> &'_ mut Self {
         self.infrared = Some(infrared);
         self
     }
@@ -513,7 +512,7 @@ impl State {
     /// let new: State = State::builder().power(true).brightness(0.5).finalize();
     /// let new: State = State::builder().color(Red).finalize();
     /// ```
-    pub fn finalize<'a>(&'a mut self) -> State {
+    pub fn finalize(&mut self) -> State {
         self.clone()
     }
 }
@@ -524,7 +523,6 @@ impl State {
 /// [`Selected::change_state`](struct.Selected.html#method.change_state), and it is encouraged to
 /// use the builder methods instead of directly constructing a changeset.
 #[derive(Clone, Default, Deserialize, Serialize)]
-#[serde(rename_all = "lowercase")]
 pub struct StateChange {
     /// The desired power state.
     pub power: Option<bool>,
@@ -550,32 +548,32 @@ impl StateChange {
         Self::default()
     }
     /// Builder function to change target power state.
-    pub fn power<'a>(&'a mut self, on: bool) -> &'a mut Self {
+    pub fn power(&mut self, on: bool) -> &'_ mut Self {
         self.power = Some(on);
         self
     }
     /// Builder function to change transition duration.
-    pub fn transition<'a, T: Into<Duration>>(&'a mut self, duration: T) -> &'a mut Self {
+    pub fn transition<T: Into<Duration>>(&mut self, duration: T) -> &'_ mut Self {
         self.duration = Some(duration.into());
         self
     }
     /// Builder function to set target change in hue.
-    pub fn hue<'a>(&'a mut self, hue: i16) -> &'a mut Self {
+    pub fn hue(&mut self, hue: i16) -> &'_ mut Self {
         self.hue = Some(hue);
         self
     }
     /// Builder function to set target change in saturation.
-    pub fn saturation<'a>(&'a mut self, saturation: f32) -> &'a mut Self {
+    pub fn saturation(&mut self, saturation: f32) -> &'_ mut Self {
         self.saturation = Some(saturation);
         self
     }
     /// Builder function to set target change in brightness.
-    pub fn brightness<'a>(&'a mut self, brightness: f32) -> &'a mut Self {
+    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
         self.brightness = Some(brightness);
         self
     }
     /// Builder function to set target change in color temperature.
-    pub fn kelvin<'a>(&'a mut self, temp: i16) -> &'a mut Self {
+    pub fn kelvin(&mut self, temp: i16) -> &'_ mut Self {
         self.kelvin = Some(temp);
         self
     }
@@ -587,7 +585,7 @@ impl StateChange {
     /// let change: StateChange = StateChange::builder().power(true).brightness(0.5).finalize();
     /// let change: StateChange = StateChange::builder().hue(-120).finalize();
     /// ```
-    pub fn finalize<'a>(&'a mut self) -> Self {
+    pub fn finalize(&mut self) -> Self {
         self.clone()
     }
 }

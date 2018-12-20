@@ -24,14 +24,14 @@ impl Client {
         }
     }
     /// Specifies the lights upon which to act.
-    pub fn select<'a, T: Select>(&'a self, selector: T) -> Selected<'a, T> {
+    pub fn select<T: Select>(&self, selector: T) -> Selected<T> {
         Selected {
             client: self,
             selector,
         }
     }
     /// Creates a request to validate the given color.
-    pub fn validate<'a>(&'a self, color: &ColorSetting) -> Request<'a> {
+    pub fn validate(&self, color: &ColorSetting) -> Request {
         Request {
             client: self,
             path: format!("/color?string={}", color),
@@ -39,7 +39,7 @@ impl Client {
         }
     }
     /// Entry point for working with scenes.
-    pub fn scenes<'a>(&'a self) -> Scenes<'a> {
+    pub fn scenes(&self) -> Scenes {
         Scenes { client: self }
     }
 }
@@ -126,7 +126,7 @@ pub struct Toggle<'a, T: Select> {
 
 impl<'a, T: Select> Toggle<'a, T> {
     /// Sets the transition time for the toggle.
-    pub fn transition<D: Into<Duration>>(&self, duration: D) -> Request<'a> {
+    pub fn transition<D: Into<Duration>>(&self, duration: D) -> Request {
         unimplemented!()
     }
 }
@@ -255,7 +255,7 @@ impl<'a> Scenes<'a> {
     pub fn list(&'a self) -> Request<'a> {
         Request {
             client: self.client,
-            path: format!("/scenes"),
+            path: "/scenes".to_string(),
             body: None,
         }
     }
