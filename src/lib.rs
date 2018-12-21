@@ -1,5 +1,9 @@
 #![deny(missing_docs)]
-#![deny(clippy::option_unwrap_used, clippy::result_unwrap_used)]
+#![deny(
+    clippy::option_unwrap_used,
+    clippy::result_unwrap_used,
+    clippy::use_self
+)]
 
 //! Control interface for LIFX light bulbs via (eventually LAN and) the internet.
 

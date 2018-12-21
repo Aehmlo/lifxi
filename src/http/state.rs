@@ -454,9 +454,9 @@ pub struct State {
 }
 
 impl<'de> Deserialize<'de> for ColorSetting {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(ColorSetting), D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Self), D::Error> {
         let s = String::deserialize(deserializer)?;
-        s.parse::<ColorSetting>().map_err(DeError::custom)
+        s.parse::<Self>().map_err(DeError::custom)
     }
 }
 
@@ -477,7 +477,7 @@ impl Serialize for Duration {
 }
 
 impl<'de> Deserialize<'de> for Duration {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Duration), D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Self), D::Error> {
         f64::deserialize(deserializer).map(|f| {
             let secs = f.floor() as u64;
             let millis = ((f % 1.0) * 1000.0) as u32;
@@ -493,7 +493,7 @@ impl Serialize for Power {
 }
 
 impl<'de> Deserialize<'de> for Power {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Power), D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Self), D::Error> {
         let s = String::deserialize(deserializer)?;
         if s == "on" {
             Ok(Power(true))
@@ -577,7 +577,7 @@ impl State {
     /// let new: State = State::builder().power(true).brightness(0.5).finalize();
     /// let new: State = State::builder().color(Red).finalize();
     /// ```
-    pub fn finalize(&mut self) -> State {
+    pub fn finalize(&mut self) -> Self {
         self.clone()
     }
 }

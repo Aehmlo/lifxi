@@ -118,9 +118,9 @@ impl FromStr for Selector {
 }
 
 impl<'de> Deserialize<'de> for Selector {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Selector), D::Error> {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Self), D::Error> {
         let s = String::deserialize(deserializer)?;
-        s.parse::<Selector>().map_err(DeError::custom)
+        s.parse::<Self>().map_err(DeError::custom)
     }
 }
 
@@ -160,8 +160,8 @@ pub struct Zones {
 }
 
 impl From<Vec<u8>> for Zones {
-    fn from(list: Vec<u8>) -> Zones {
-        Zones { list }
+    fn from(list: Vec<u8>) -> Self {
+        Self { list }
     }
 }
 
@@ -182,38 +182,38 @@ impl<'a> FromIterator<&'a u8> for Zones {
 }
 
 impl From<::std::ops::Range<u8>> for Zones {
-    fn from(from: ::std::ops::Range<u8>) -> Zones {
+    fn from(from: ::std::ops::Range<u8>) -> Self {
         from.collect::<Vec<_>>().into()
     }
 }
 
 impl From<::std::ops::RangeInclusive<u8>> for Zones {
-    fn from(from: ::std::ops::RangeInclusive<u8>) -> Zones {
+    fn from(from: ::std::ops::RangeInclusive<u8>) -> Self {
         from.collect::<Vec<_>>().into()
     }
 }
 
 impl From<::std::ops::RangeFrom<u8>> for Zones {
-    fn from(from: ::std::ops::RangeFrom<u8>) -> Zones {
+    fn from(from: ::std::ops::RangeFrom<u8>) -> Self {
         (from.start..=255).collect::<Vec<_>>().into()
     }
 }
 
 impl From<::std::ops::RangeTo<u8>> for Zones {
-    fn from(from: ::std::ops::RangeTo<u8>) -> Zones {
+    fn from(from: ::std::ops::RangeTo<u8>) -> Self {
         (0..from.end).collect::<Vec<_>>().into()
     }
 }
 
 impl From<::std::ops::RangeToInclusive<u8>> for Zones {
-    fn from(from: ::std::ops::RangeToInclusive<u8>) -> Zones {
+    fn from(from: ::std::ops::RangeToInclusive<u8>) -> Self {
         (0..=from.end).collect::<Vec<_>>().into()
     }
 }
 
 impl From<u8> for Zones {
-    fn from(from: u8) -> Zones {
-        Zones { list: vec![from] }
+    fn from(from: u8) -> Self {
+        Self { list: vec![from] }
     }
 }
 
@@ -297,7 +297,7 @@ where
     /// let sel = Selector::Group("Living Room".to_string()).zoned(1).random();
     /// assert_eq!(&format!("{}", sel), "group:Living Room|1:random");
     /// ```
-    fn random(self) -> Random<T> {
+    fn random(self) -> Random<Self> {
         Random(self)
     }
 }
