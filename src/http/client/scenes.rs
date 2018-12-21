@@ -1,5 +1,5 @@
 use crate::http::{
-    client::{Client, Request},
+    client::{AsRequest, Client, Request},
     state::{Duration, State},
 };
 use reqwest::Method;
@@ -23,23 +23,13 @@ impl<'a> Scenes<'a> {
     }
     /// Creates a configurable request for activating a specific scene.
     pub fn activate<S: ToString>(&'a self, uuid: S) -> Activate<'a> {
-        Activate {
-            parent: self,
-            uuid: uuid.to_string(),
-            transition: None,
-            ignore: Vec::new(),
-            overrides: None,
-        }
+        Activate::new(self, uuid.to_string())
     }
 }
 
-/// A configurable request for activating a specified scene.
-#[derive(Serialize)]
-pub struct Activate<'a> {
-    #[serde(skip)]
-    parent: &'a Scenes<'a>,
-    #[serde(skip)]
-    uuid: String,
+#[derive(Clone, Default, Serialize)]
+#[doc(hidden)]
+pub struct ActivatePayload {
     #[serde(rename = "duration", skip_serializing_if = "Option::is_none")]
     transition: Option<Duration>,
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -48,22 +38,36 @@ pub struct Activate<'a> {
     overrides: Option<State>,
 }
 
+/// A configurable request for activating a specified scene.
+pub struct Activate<'a> {
+    parent: &'a Scenes<'a>,
+    uuid: String,
+    inner: ActivatePayload,
+}
+
 impl<'a> Activate<'a> {
+    pub(crate) fn new(parent: &'a Scenes<'a>, uuid: String) -> Self {
+        Self {
+            parent,
+            uuid,
+            inner: ActivatePayload::default(),
+        }
+    }
     /// Sets the transition time for the scene activation.
     pub fn transition<D: Into<Duration>>(&'a mut self, transition: D) -> &'a mut Self {
-        self.transition = Some(transition.into());
+        self.inner.transition = Some(transition.into());
         self
     }
     /// Adds a property to the list of ignored properties when changing.
     ///
     /// This method takes a string for now; in later versions, it will be strongly-typed.
     pub fn ignore(&'a mut self, s: impl Into<String>) -> &'a mut Self {
-        self.ignore.push(s.into());
+        self.inner.ignore.push(s.into());
         self
     }
     /// Sets an overriding state that will take priority over all scene attributes.
     pub fn overwrite(&'a mut self, state: State) -> &'a mut Self {
-        self.overrides = Some(state);
+        self.inner.overrides = Some(state);
         self
     }
 }
@@ -76,5 +80,20 @@ impl<'a, 'b: 'a> From<&'b Activate<'a>> for Request<'a, &Activate<'b>> {
             method: Method::PUT,
             path: format!("/scenes/scene_id:{}/activate", activate.uuid),
         }
+    }
+}
+
+impl<'a> AsRequest<ActivatePayload> for Activate<'a> {
+    fn method() -> reqwest::Method {
+        Method::PUT
+    }
+    fn client(&self) -> &'_ Client {
+        self.parent.client
+    }
+    fn path(&self) -> String {
+        format!("/scenes/scene_id/{}/activate", self.uuid)
+    }
+    fn body(&self) -> &'_ ActivatePayload {
+        &self.inner
     }
 }

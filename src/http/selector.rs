@@ -266,7 +266,7 @@ impl Selector {
 }
 
 /// Marker trait indicating the potential for use in identifying devices.
-pub trait Select: fmt::Display {}
+pub trait Select: fmt::Display + Serialize {}
 impl Select for Selector {}
 impl Select for Zoned {}
 impl<T: PureSelect> Select for Random<T> {}

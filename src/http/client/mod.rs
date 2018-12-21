@@ -1,9 +1,6 @@
 use std::string::ToString;
 
-use crate::http::{
-    selector::Select,
-    state::{Color, State, StateChange},
-};
+use crate::http::{selector::Select, state::Color};
 use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
 
@@ -14,8 +11,20 @@ use self::effects::*;
 use self::scenes::*;
 use self::states::*;
 
+/// Trait enabling non-terminal conversion of request builders to requests.
+pub trait AsRequest<S: Serialize> {
+    /// The HTTP verb to be used.
+    fn method() -> reqwest::Method;
+    /// A reference to the shared client (so we can reuse it).
+    fn client(&self) -> &'_ Client;
+    /// The relative path (to the API root) of the appropriate endpoint.
+    fn path(&self) -> String;
+    /// The request body to be used, as configured by the user.
+    fn body(&self) -> &'_ S;
+}
+
 /// The result type for all requests made with the client.
-pub type Result = ::std::result::Result<reqwest::Response, reqwest::Error>;
+pub type ClientResult = ::std::result::Result<reqwest::Response, reqwest::Error>;
 
 /// The crux of the HTTP API. Start here.
 ///
@@ -46,11 +55,7 @@ impl Client {
     /// For a simpler API when working with a single state on one or multiple lights, see
     /// [`Selected::set_state`](struct.Selected.html#method.set_state).
     pub fn set_states(&self) -> SetStates<'_> {
-        SetStates {
-            parent: self,
-            default: None,
-            new: Vec::new(),
-        }
+        SetStates::new(self)
     }
     /// Creates a request to validate the given color.
     pub fn validate(&self, color: &Color) -> Request<'_, ()> {
@@ -70,18 +75,18 @@ impl Client {
 /// Represents a terminal request.
 ///
 /// The only thing to be done with this request is send it; no further configuration is possible.
-pub struct Request<'a, U> {
+pub struct Request<'a, S> {
     client: &'a Client,
     path: String,
-    body: U,
+    body: S,
     method: Method,
 }
 
-impl<'a, U> Request<'a, U>
+impl<'a, S> Request<'a, S>
 where
-    U: Serialize,
+    S: Serialize,
 {
-    fn send(self) -> Result {
+    fn send(self) -> ClientResult {
         let token = self.client.token.as_str();
         let client = &self.client.client;
         let url = &format!("https://api.lifx.com/v1{}", self.path);
@@ -95,19 +100,24 @@ where
 }
 
 /// Trait for configurable (non-terminal) requests to be sent conveniently.
-pub trait Send<U> {
+pub trait Send<S> {
     /// Sends the request.
-    fn send(self) -> Result;
+    fn send(&self) -> ClientResult;
 }
 
-impl<'a, T, U> Send<U> for T
+impl<'a, T, S> Send<S> for T
 where
-    T: Into<Request<'a, U>>,
-    U: Serialize,
+    T: AsRequest<S>,
+    S: Serialize,
 {
     /// Delegates to [`Request::send`](struct.Request.html#method.send).
-    fn send(self) -> Result {
-        let request: Request<U> = self.into();
+    fn send(&self) -> ClientResult {
+        let request = Request {
+            body: self.body().clone(),
+            client: self.client(),
+            method: Self::method(),
+            path: self.path(),
+        };
         request.send()
     }
 }
@@ -135,54 +145,23 @@ where
     }
     /// Creates a request to set a uniform state on one or more lights.
     pub fn set_state(&'a self) -> SetState<'a, T> {
-        SetState {
-            parent: self,
-            new: State::default(),
-        }
+        SetState::new(self)
     }
     /// Creates a request to incrementally change state on one or more lights.
     pub fn change_state(&'a self) -> ChangeState<'a, T> {
-        ChangeState {
-            parent: self,
-            change: StateChange::default(),
-        }
+        ChangeState::new(self)
     }
     /// Creates a request to begin a "breathe" effect.
     pub fn breathe(&'a self, color: Color) -> Breathe<'a, T> {
-        Breathe {
-            parent: self,
-            color,
-            cycles: None,
-            from: None,
-            peak: None,
-            period: None,
-            persist: None,
-            power_on: None,
-            selector: &self.selector,
-        }
+        Breathe::new(self, color)
     }
     /// Creates a request to begin a "pulse" effect.
     pub fn pulse(&'a self, color: Color) -> Pulse<'a, T> {
-        Pulse {
-            parent: self,
-            color,
-            cycles: None,
-            from: None,
-            period: None,
-            persist: None,
-            power_on: None,
-            selector: &self.selector,
-        }
+        Pulse::new(self, color)
     }
     /// Begins the processor of specifying a cycle.
     pub fn cycle(&'a self) -> Cycle<'a, T> {
-        Cycle {
-            parent: self,
-            selector: &self.selector,
-            direction: "forward",
-            states: Vec::new(),
-            default: None,
-        }
+        Cycle::new(self)
     }
     /// Creates a request to toggle power to the specified light(s), with an optional transition
     /// time.
@@ -191,6 +170,6 @@ where
     /// All specified lights will have the same power state after this request is processed; if all
     /// are off, all will be turned on, but if any are on, all will be turned off.
     pub fn toggle(&'a self) -> Toggle<'a, T> {
-        Toggle { parent: self }
+        Toggle::new(self)
     }
 }
