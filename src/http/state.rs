@@ -267,7 +267,7 @@ impl FromStr for ColorSetting {
 }
 
 /// Represents a (local) color validation error.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     /// The given hue was greater than the maximum hue of 360.
     Hue(u16),
@@ -665,6 +665,47 @@ impl StateChange {
 #[cfg(test)]
 mod tests {
     use super::*;
+    mod state {
+        use super::*;
+        #[test]
+        fn builder() {
+            let state = State::builder()
+                .power(true)
+                .transition(::std::time::Duration::from_secs(1))
+                .color(ColorSetting::White)
+                .infrared(0.7)
+                .brightness(0.3)
+                .finalize();
+            assert_eq!(state.power, Some(Power(true)));
+            assert_eq!(state.duration.map(|d| d.0.as_secs()), Some(1));
+            assert_eq!(state.brightness, Some(0.3));
+            assert_eq!(state.infrared, Some(0.7));
+            assert_eq!(
+                state.color.map(|c| format!("{}", c)),
+                Some("white".to_string())
+            );
+        }
+        mod change {
+            use super::*;
+            #[test]
+            fn builder() {
+                let change = StateChange::builder()
+                    .power(true)
+                    .transition(::std::time::Duration::from_secs(3))
+                    .hue(120)
+                    .saturation(-0.3)
+                    .brightness(0.1)
+                    .kelvin(500)
+                    .finalize();
+                assert_eq!(change.power, Some(Power(true)));
+                assert_eq!(change.duration.map(|d| d.0.as_secs()), Some(3));
+                assert_eq!(change.hue, Some(120));
+                assert_eq!(change.saturation, Some(-0.3));
+                assert_eq!(change.brightness, Some(0.1));
+                assert_eq!(change.kelvin, Some(500));
+            }
+        }
+    }
     mod color {
         use super::*;
         #[test]
@@ -736,6 +777,77 @@ mod tests {
             assert_eq!(color, Ok(ColorSetting::RgbStr("#123456".to_string())));
             let color = "#000000".parse();
             assert_eq!(color, Ok(ColorSetting::RgbStr("#000000".to_string())));
+        }
+        #[test]
+        fn validate() {
+            let color = ColorSetting::Red;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Orange;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Yellow;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Green;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Blue;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Purple;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::White;
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Hue(370);
+            assert_eq!(color.validate(), Err(Error::Hue(370)));
+            let color = ColorSetting::Hue(300);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Hue(0);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Hue(0);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Saturation(-1.0);
+            assert_eq!(color.validate(), Err(Error::SaturationLow(-1.0)));
+            let color = ColorSetting::Saturation(0.0);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Saturation(1.0);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Saturation(2.0);
+            assert_eq!(color.validate(), Err(Error::SaturationHigh(2.0)));
+            let color = ColorSetting::Brightness(-0.3);
+            assert_eq!(color.validate(), Err(Error::BrightnessLow(-0.3)));
+            let color = ColorSetting::Brightness(0.0);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Brightness(3.4);
+            assert_eq!(color.validate(), Err(Error::BrightnessHigh(3.4)));
+            let color = ColorSetting::Kelvin(1000);
+            assert_eq!(color.validate(), Err(Error::KelvinLow(1000)));
+            let color = ColorSetting::Kelvin(1500);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Kelvin(9000);
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::Kelvin(9001);
+            assert_eq!(color.validate(), Err(Error::KelvinHigh(9001)));
+            let color = ColorSetting::RgbStr("#12345".to_string());
+            assert_eq!(
+                color.validate(),
+                Err(Error::RgbStrShort(true, "#12345".to_string()))
+            );
+            let color = ColorSetting::RgbStr("12345".to_string());
+            assert_eq!(
+                color.validate(),
+                Err(Error::RgbStrShort(false, "12345".to_string()))
+            );
+            let color = ColorSetting::RgbStr("123456".to_string());
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::RgbStr("#123456".to_string());
+            assert!(color.validate().is_ok());
+            let color = ColorSetting::RgbStr("1234567".to_string());
+            assert_eq!(
+                color.validate(),
+                Err(Error::RgbStrLong(false, "1234567".to_string()))
+            );
+            let color = ColorSetting::RgbStr("#1234567".to_string());
+            assert_eq!(
+                color.validate(),
+                Err(Error::RgbStrLong(true, "#1234567".to_string()))
+            );
         }
     }
 }
