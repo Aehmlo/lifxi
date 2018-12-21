@@ -695,7 +695,9 @@ mod tests {
             assert_eq!(&format!("{}", color), "kelvin:3500");
             let color = ColorSetting::Rgb([0, 17, 36]);
             assert_eq!(&format!("{}", color), "rgb:0,17,36");
-            let color = ColorSetting::RgbStr("000000".to_string());
+            let color = ColorSetting::RgbStr("123456".to_string());
+            assert_eq!(&format!("{}", color), "#123456");
+            let color = ColorSetting::RgbStr("#000000".to_string());
             assert_eq!(&format!("{}", color), "#000000");
         }
     }
