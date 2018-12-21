@@ -2,7 +2,7 @@ use std::string::ToString;
 
 use crate::http::{
     selector::Select,
-    state::{ColorSetting, Duration, Power, State, StateChange},
+    state::{ColorSetting, State, StateChange},
 };
 use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
@@ -145,6 +145,33 @@ where
         ChangeState {
             parent: self,
             change: StateChange::default(),
+        }
+    }
+    /// Creates a request to begin a "breathe" effect.
+    pub fn breathe(&'a self, color: ColorSetting) -> Breathe<'a, T> {
+        Breathe {
+            parent: self,
+            color,
+            cycles: None,
+            from: None,
+            peak: None,
+            period: None,
+            persist: None,
+            power_on: None,
+            selector: &self.selector,
+        }
+    }
+    /// Creates a request to begin a "pulse" effect.
+    pub fn pulse(&'a self, color: ColorSetting) -> Pulse<'a, T> {
+        Pulse {
+            parent: self,
+            color,
+            cycles: None,
+            from: None,
+            period: None,
+            persist: None,
+            power_on: None,
+            selector: &self.selector,
         }
     }
     /// Creates a request to toggle power to the specified light(s), with an optional transition
