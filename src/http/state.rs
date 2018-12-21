@@ -504,9 +504,13 @@ impl<'de> Deserialize<'de> for Power {
 }
 
 impl State {
-    /// Creates a new builder.
+    /// Constructs an empty state.
     ///
-    /// Finalize the new state settings with [`State::finalize`](#method.finalize).
+    /// Identical to [`State::builder`](#method.builder).
+    pub fn new() -> Self {
+        Self::default()
+    }
+    /// Creates a new builder.
     pub fn builder() -> Self {
         Self::default()
     }
@@ -516,9 +520,9 @@ impl State {
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::State;
-    /// let new: State = State::builder().power(true).transition(Duration::from_millis(800)).finalize();
+    /// let new: State = State::builder().power(true).transition(Duration::from_millis(800));
     /// ```
-    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut Self {
+    pub fn power<P: Into<Power>>(mut self, on: P) -> Self {
         self.power = Some(on.into());
         self
     }
@@ -528,9 +532,9 @@ impl State {
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::{Color::*, State};
-    /// let new: State = State::builder().color(Red).finalize();
+    /// let new: State = State::builder().color(Red);
     /// ```
-    pub fn color(&mut self, color: Color) -> &'_ mut Self {
+    pub fn color(mut self, color: Color) -> Self {
         self.color = Some(color);
         self
     }
@@ -540,9 +544,9 @@ impl State {
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::State;
-    /// let new: State = State::builder().brightness(0.7).transition(Duration::from_millis(800)).finalize();
+    /// let new: State = State::builder().brightness(0.7).transition(Duration::from_millis(800));
     /// ```
-    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
+    pub fn brightness(mut self, brightness: f32) -> Self {
         self.brightness = Some(brightness);
         self
     }
@@ -552,9 +556,9 @@ impl State {
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::{Color::*, State};
-    /// let new: State = State::builder().color(Red).transition(Duration::from_millis(800)).finalize();
+    /// let new: State = State::builder().color(Red).transition(Duration::from_millis(800));
     /// ```
-    pub fn transition<D: Into<Duration>>(&mut self, duration: D) -> &'_ mut Self {
+    pub fn transition<D: Into<Duration>>(mut self, duration: D) -> Self {
         self.duration = Some(duration.into());
         self
     }
@@ -563,22 +567,11 @@ impl State {
     /// ### Examples
     /// ```
     /// use lifx::http::State;
-    /// let new: State = State::builder().infrared(0.8).finalize();
+    /// let new: State = State::builder().infrared(0.8);
     /// ```
-    pub fn infrared(&mut self, infrared: f32) -> &'_ mut Self {
+    pub fn infrared(mut self, infrared: f32) -> Self {
         self.infrared = Some(infrared);
         self
-    }
-    /// Finalizes the builder, returning the final state configuration.
-    ///
-    /// ### Example
-    /// ```
-    /// use lifx::http::{Color::*, State};
-    /// let new: State = State::builder().power(true).brightness(0.5).finalize();
-    /// let new: State = State::builder().color(Red).finalize();
-    /// ```
-    pub fn finalize(&mut self) -> Self {
-        self.clone()
     }
 }
 
@@ -613,52 +606,45 @@ pub struct StateChange {
 }
 
 impl StateChange {
-    /// Creates a new builder.
+    /// Constructs an empty state change.
     ///
-    /// Finalize the state change settings with [`State::finalize`](#method.finalize).
+    /// Identical to [`StateChange::new`](#method.builder).
+    pub fn new() -> Self {
+        Self::builder()
+    }
+    /// Creates a new builder.
     pub fn builder() -> Self {
         Self::default()
     }
     /// Builder function to change target power state.
-    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut Self {
+    pub fn power<P: Into<Power>>(mut self, on: P) -> Self {
         self.power = Some(on.into());
         self
     }
     /// Builder function to change transition duration.
-    pub fn transition<T: Into<Duration>>(&mut self, duration: T) -> &'_ mut Self {
+    pub fn transition<T: Into<Duration>>(mut self, duration: T) -> Self {
         self.duration = Some(duration.into());
         self
     }
     /// Builder function to set target change in hue.
-    pub fn hue(&mut self, hue: i16) -> &'_ mut Self {
+    pub fn hue(mut self, hue: i16) -> Self {
         self.hue = Some(hue);
         self
     }
     /// Builder function to set target change in saturation.
-    pub fn saturation(&mut self, saturation: f32) -> &'_ mut Self {
+    pub fn saturation(mut self, saturation: f32) -> Self {
         self.saturation = Some(saturation);
         self
     }
     /// Builder function to set target change in brightness.
-    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
+    pub fn brightness(mut self, brightness: f32) -> Self {
         self.brightness = Some(brightness);
         self
     }
     /// Builder function to set target change in color temperature.
-    pub fn kelvin(&mut self, temp: i16) -> &'_ mut Self {
+    pub fn kelvin(mut self, temp: i16) -> Self {
         self.kelvin = Some(temp);
         self
-    }
-    /// Finalizes the builder, returning the final state change configuration.
-    ///
-    /// ### Example
-    /// ```
-    /// use lifx::http::StateChange;
-    /// let change: StateChange = StateChange::builder().power(true).brightness(0.5).finalize();
-    /// let change: StateChange = StateChange::builder().hue(-120).finalize();
-    /// ```
-    pub fn finalize(&mut self) -> Self {
-        self.clone()
     }
 }
 
@@ -669,13 +655,12 @@ mod tests {
         use super::*;
         #[test]
         fn builder() {
-            let state = State::builder()
+            let state = State::new()
                 .power(true)
                 .transition(::std::time::Duration::from_secs(1))
                 .color(Color::White)
                 .infrared(0.7)
-                .brightness(0.3)
-                .finalize();
+                .brightness(0.3);
             assert_eq!(state.power, Some(Power(true)));
             assert_eq!(state.duration.map(|d| d.0.as_secs()), Some(1));
             assert_eq!(state.brightness, Some(0.3));
@@ -689,14 +674,13 @@ mod tests {
             use super::*;
             #[test]
             fn builder() {
-                let change = StateChange::builder()
+                let change = StateChange::new()
                     .power(true)
                     .transition(::std::time::Duration::from_secs(3))
                     .hue(120)
                     .saturation(-0.3)
                     .brightness(0.1)
-                    .kelvin(500)
-                    .finalize();
+                    .kelvin(500);
                 assert_eq!(change.power, Some(Power(true)));
                 assert_eq!(change.duration.map(|d| d.0.as_secs()), Some(3));
                 assert_eq!(change.hue, Some(120));
