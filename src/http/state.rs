@@ -63,6 +63,12 @@ pub enum ColorSetting {
     ///
     /// It is preferred to use [`Rgb`](#variant.Rgb) instead of this where posssible.
     RgbStr(String),
+    /// Uses a custom specifier string.
+    ///
+    /// This option exists for undocumented features. For instance, "cyan" is a valid color choice,
+    /// but it is undocumented and therefore (theoretically) unstable, so it is not officially/
+    /// supported by this crate.
+    Custom(String),
 }
 
 impl fmt::Display for ColorSetting {
@@ -88,6 +94,7 @@ impl fmt::Display for ColorSetting {
                     write!(f, "#{}", s)
                 }
             }
+            ColorSetting::Custom(s) => write!(f, "{}", s),
         }
     }
 }
@@ -160,6 +167,10 @@ impl fmt::Display for ColorParseError {
 
 impl FromStr for ColorSetting {
     type Err = ColorParseError;
+    /// Parses the color string into a color setting.
+    ///
+    /// ### Notes
+    /// Custom colors cannot be made with this method; use `ColorSetting::Custom(s)` instead.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::ColorParseError::*;
         use self::ColorSetting::*;
@@ -310,6 +321,9 @@ impl ::std::error::Error for Error {}
 impl ColorSetting {
     /// Checks whether the color is valid.
     ///
+    /// ### Notes
+    /// Custom color strings are not validated.
+    ///
     /// ### Examples
     /// ```
     /// use lifx::http::ColorSetting;
@@ -387,6 +401,7 @@ impl ColorSetting {
                     Ok(())
                 }
             }
+            Custom(_) => Ok(()),
         }
     }
 }
