@@ -174,6 +174,16 @@ where
             selector: &self.selector,
         }
     }
+    /// Begins the processor of specifying a cycle.
+    pub fn cycle(&'a self) -> Cycle<'a, T> {
+        Cycle {
+            parent: self,
+            selector: &self.selector,
+            direction: "forward",
+            states: Vec::new(),
+            default: None,
+        }
+    }
     /// Creates a request to toggle power to the specified light(s), with an optional transition
     /// time.
     ///

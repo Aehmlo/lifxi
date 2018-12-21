@@ -177,3 +177,48 @@ impl<'a, T: Select> From<&ChangeState<'a, T>> for Request<'a, StateChange> {
         }
     }
 }
+
+/// Specifies a list of effects to cycle through. Each request causes the cycle to advance.
+#[derive(Serialize)]
+pub struct Cycle<'a, T: Select> {
+    #[serde(skip)]
+    pub(crate) parent: &'a Selected<'a, T>,
+    pub(crate) selector: &'a T,
+    pub(crate) direction: &'static str,
+    pub(crate) states: Vec<State>,
+    #[serde(rename = "defaults", skip_serializing_if = "Option::is_none")]
+    pub(crate) default: Option<State>,
+}
+
+impl<'a, T: Select> Cycle<'a, T> {
+    /// Adds a state to the cycle.
+    pub fn add(&mut self, next: State) -> &'_ mut Self {
+        self.states.push(next);
+        self
+    }
+    /// Sets the default values to use when not specified.
+    pub fn default(&mut self, state: State) -> &'_ mut Self {
+        self.default = Some(state);
+        self
+    }
+    /// Reverses the direction of the cycle.
+    pub fn rev(&mut self) -> &'_ mut Self {
+        self.direction = if self.direction == "forward" {
+            "backward"
+        } else {
+            "forward"
+        };
+        self
+    }
+}
+
+impl<'a, 'b: 'a, T: Select> From<&'b Cycle<'a, T>> for Request<'a, &'b Cycle<'a, T>> {
+    fn from(effect: &'b Cycle<'a, T>) -> Self {
+        Self {
+            client: effect.parent.client,
+            path: format!("/lights/{}/cycle", effect.parent.selector),
+            body: effect,
+            method: Method::POST,
+        }
+    }
+}
