@@ -175,6 +175,12 @@ impl FromIterator<u8> for Zones {
     }
 }
 
+impl<'a> FromIterator<&'a u8> for Zones {
+    fn from_iter<I: IntoIterator<Item = &'a u8>>(iter: I) -> Self {
+        Self::from_iter(iter.into_iter().cloned())
+    }
+}
+
 impl From<::std::ops::Range<u8>> for Zones {
     fn from(from: ::std::ops::Range<u8>) -> Zones {
         from.collect::<Vec<_>>().into()
@@ -329,6 +335,11 @@ mod tests {
         assert_eq!(&format!("{}", selector), "all|0|1|2");
         let selector = Selector::All.random();
         assert_eq!(&format!("{}", selector), "all:random");
+        let zones = vec![1, 2];
+        let selector = Selector::All.zoned(zones.iter().collect::<Zones>());
+        assert_eq!(&format!("{}", selector), "all|1|2");
+        let selector = Selector::All.zoned(zones);
+        assert_eq!(&format!("{}", selector), "all|1|2");
     }
     #[test]
     fn deserialize() {
