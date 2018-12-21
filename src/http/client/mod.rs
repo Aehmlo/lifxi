@@ -113,7 +113,7 @@ where
     /// Delegates to [`Request::send`](struct.Request.html#method.send).
     fn send(&self) -> ClientResult {
         let request = Request {
-            body: self.body().clone(),
+            body: self.body(),
             client: self.client(),
             method: Self::method(),
             path: self.path(),

@@ -126,7 +126,7 @@ impl<'a> SetStates<'a> {
         }
     }
     /// Adds the given state to the list.
-    pub fn add<T: Select>(&mut self, selector: T, state: State) -> &'_ mut Self {
+    pub fn add<T: Select>(&mut self, selector: &T, state: State) -> &'_ mut Self {
         self.inner.new.push(StateExt {
             selector: format!("{}", selector),
             state,

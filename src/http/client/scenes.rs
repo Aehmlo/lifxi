@@ -22,7 +22,7 @@ impl<'a> Scenes<'a> {
         }
     }
     /// Creates a configurable request for activating a specific scene.
-    pub fn activate<S: ToString>(&'a self, uuid: S) -> Activate<'a> {
+    pub fn activate<S: ToString>(&'a self, uuid: &S) -> Activate<'a> {
         Activate::new(self, uuid.to_string())
     }
 }
