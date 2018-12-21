@@ -83,8 +83,8 @@ impl fmt::Display for ColorSetting {
             ColorSetting::Pink => write!(f, "pink"),
             ColorSetting::White => write!(f, "white"),
             ColorSetting::Hue(hue) => write!(f, "hue:{}", hue),
-            ColorSetting::Saturation(sat) => write!(f, "saturation:{:0.1}", sat),
-            ColorSetting::Brightness(b) => write!(f, "brightness:{:0.1}", b),
+            ColorSetting::Saturation(sat) => write!(f, "saturation:{}", sat),
+            ColorSetting::Brightness(b) => write!(f, "brightness:{}", b),
             ColorSetting::Kelvin(t) => write!(f, "kelvin:{}", t),
             ColorSetting::Rgb(rgb) => write!(f, "rgb:{},{},{}", rgb[0], rgb[1], rgb[2]),
             ColorSetting::RgbStr(s) => {
@@ -657,5 +657,46 @@ impl StateChange {
     /// ```
     pub fn finalize(&mut self) -> Self {
         self.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    mod color {
+        use super::*;
+        #[test]
+        fn serialize() {
+            let color = ColorSetting::Red;
+            assert_eq!(&format!("{}", color), "red");
+            let color = ColorSetting::Orange;
+            assert_eq!(&format!("{}", color), "orange");
+            let color = ColorSetting::Yellow;
+            assert_eq!(&format!("{}", color), "yellow");
+            let color = ColorSetting::Green;
+            assert_eq!(&format!("{}", color), "green");
+            let color = ColorSetting::Blue;
+            assert_eq!(&format!("{}", color), "blue");
+            let color = ColorSetting::Purple;
+            assert_eq!(&format!("{}", color), "purple");
+            let color = ColorSetting::Pink;
+            assert_eq!(&format!("{}", color), "pink");
+            let color = ColorSetting::White;
+            assert_eq!(&format!("{}", color), "white");
+            let color = ColorSetting::Custom("cyan".to_string());
+            assert_eq!(&format!("{}", color), "cyan");
+            let color = ColorSetting::Hue(240);
+            assert_eq!(&format!("{}", color), "hue:240");
+            let color = ColorSetting::Saturation(0.531);
+            assert_eq!(&format!("{}", color), "saturation:0.531");
+            let color = ColorSetting::Brightness(0.3);
+            assert_eq!(&format!("{}", color), "brightness:0.3");
+            let color = ColorSetting::Kelvin(3500);
+            assert_eq!(&format!("{}", color), "kelvin:3500");
+            let color = ColorSetting::Rgb([0, 17, 36]);
+            assert_eq!(&format!("{}", color), "rgb:0,17,36");
+            let color = ColorSetting::RgbStr("000000".to_string());
+            assert_eq!(&format!("{}", color), "#000000");
+        }
     }
 }
