@@ -1,7 +1,7 @@
 use crate::http::{
     client::{Request, Selected},
     selector::Select,
-    state::{ColorSetting, Duration},
+    state::{Color, Duration},
 };
 use reqwest::Method;
 
@@ -10,10 +10,10 @@ use reqwest::Method;
 pub struct Breathe<'a, T: Select> {
     #[serde(skip)]
     pub(crate) parent: &'a Selected<'a, T>,
-    pub(crate) color: ColorSetting,
+    pub(crate) color: Color,
     pub(crate) selector: &'a T,
     #[serde(skip_serializing_if = "Option::is_none", rename = "from_color")]
-    pub(crate) from: Option<ColorSetting>,
+    pub(crate) from: Option<Color>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) period: Option<Duration>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -30,7 +30,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     /// Sets the starting color.
     ///
     /// If left blank, the current color of the bulb is used.
-    pub fn from(&mut self, color: ColorSetting) -> &'_ mut Self {
+    pub fn from(&mut self, color: Color) -> &'_ mut Self {
         self.from = Some(color);
         self
     }
@@ -77,10 +77,10 @@ impl<'a, 'b: 'a, T: Select> From<&'b Breathe<'a, T>> for Request<'a, &'b Breathe
 pub struct Pulse<'a, T: Select> {
     #[serde(skip)]
     pub(crate) parent: &'a Selected<'a, T>,
-    pub(crate) color: ColorSetting,
+    pub(crate) color: Color,
     pub(crate) selector: &'a T,
     #[serde(skip_serializing_if = "Option::is_none", rename = "from_color")]
-    pub(crate) from: Option<ColorSetting>,
+    pub(crate) from: Option<Color>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub(crate) period: Option<Duration>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -95,7 +95,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     /// Sets the starting color.
     ///
     /// If left blank, the current color of the bulb is used.
-    pub fn from(&mut self, color: ColorSetting) -> &'_ mut Self {
+    pub fn from(&mut self, color: Color) -> &'_ mut Self {
         self.from = Some(color);
         self
     }

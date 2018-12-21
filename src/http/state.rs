@@ -12,7 +12,7 @@ use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializ
 ///
 /// RGB colors will automatically be converted by the API.
 #[derive(Clone, Debug, PartialEq)]
-pub enum ColorSetting {
+pub enum Color {
     /// Sets the hue and saturation components necessary to change the color to red, leaving
     /// brightness untouched.
     Red,
@@ -71,30 +71,30 @@ pub enum ColorSetting {
     Custom(String),
 }
 
-impl fmt::Display for ColorSetting {
+impl fmt::Display for Color {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            ColorSetting::Red => write!(f, "red"),
-            ColorSetting::Orange => write!(f, "orange"),
-            ColorSetting::Yellow => write!(f, "yellow"),
-            ColorSetting::Green => write!(f, "green"),
-            ColorSetting::Blue => write!(f, "blue"),
-            ColorSetting::Purple => write!(f, "purple"),
-            ColorSetting::Pink => write!(f, "pink"),
-            ColorSetting::White => write!(f, "white"),
-            ColorSetting::Hue(hue) => write!(f, "hue:{}", hue),
-            ColorSetting::Saturation(sat) => write!(f, "saturation:{}", sat),
-            ColorSetting::Brightness(b) => write!(f, "brightness:{}", b),
-            ColorSetting::Kelvin(t) => write!(f, "kelvin:{}", t),
-            ColorSetting::Rgb(rgb) => write!(f, "rgb:{},{},{}", rgb[0], rgb[1], rgb[2]),
-            ColorSetting::RgbStr(s) => {
+            Color::Red => write!(f, "red"),
+            Color::Orange => write!(f, "orange"),
+            Color::Yellow => write!(f, "yellow"),
+            Color::Green => write!(f, "green"),
+            Color::Blue => write!(f, "blue"),
+            Color::Purple => write!(f, "purple"),
+            Color::Pink => write!(f, "pink"),
+            Color::White => write!(f, "white"),
+            Color::Hue(hue) => write!(f, "hue:{}", hue),
+            Color::Saturation(sat) => write!(f, "saturation:{}", sat),
+            Color::Brightness(b) => write!(f, "brightness:{}", b),
+            Color::Kelvin(t) => write!(f, "kelvin:{}", t),
+            Color::Rgb(rgb) => write!(f, "rgb:{},{},{}", rgb[0], rgb[1], rgb[2]),
+            Color::RgbStr(s) => {
                 if s.starts_with('#') {
                     write!(f, "{}", s)
                 } else {
                     write!(f, "#{}", s)
                 }
             }
-            ColorSetting::Custom(s) => write!(f, "{}", s),
+            Color::Custom(s) => write!(f, "{}", s),
         }
     }
 }
@@ -166,15 +166,15 @@ impl fmt::Display for ColorParseError {
     }
 }
 
-impl FromStr for ColorSetting {
+impl FromStr for Color {
     type Err = ColorParseError;
     /// Parses the color string into a color setting.
     ///
     /// ### Notes
-    /// Custom colors cannot be made with this method; use `ColorSetting::Custom(s)` instead.
+    /// Custom colors cannot be made with this method; use `Color::Custom(s)` instead.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        use self::Color::*;
         use self::ColorParseError::*;
-        use self::ColorSetting::*;
         match s {
             "red" => Ok(Red),
             "orange" => Ok(Orange),
@@ -319,7 +319,7 @@ impl fmt::Display for Error {
 
 impl ::std::error::Error for Error {}
 
-impl ColorSetting {
+impl Color {
     /// Checks whether the color is valid.
     ///
     /// ### Notes
@@ -327,33 +327,33 @@ impl ColorSetting {
     ///
     /// ### Examples
     /// ```
-    /// use lifx::http::ColorSetting;
+    /// use lifx::http::Color;
     /// // Too short
-    /// let setting = ColorSetting::RgbStr("".to_string());
+    /// let setting = Color::RgbStr("".to_string());
     /// assert!(setting.validate().is_err());
     /// // Too long for no leading #
-    /// let setting = ColorSetting::RgbStr("1234567".to_string());
+    /// let setting = Color::RgbStr("1234567".to_string());
     /// assert!(setting.validate().is_err());
     /// // Too high (max 9000)
-    /// let setting = ColorSetting::Kelvin(10_000);
+    /// let setting = Color::Kelvin(10_000);
     /// assert!(setting.validate().is_err());
     /// // Too high (max 1.0)
-    /// let setting = ColorSetting::Brightness(1.2);
+    /// let setting = Color::Brightness(1.2);
     /// assert!(setting.validate().is_err());
     /// // Too low (min 0.0)
-    /// let setting = ColorSetting::Saturation(-0.1);
+    /// let setting = Color::Saturation(-0.1);
     /// assert!(setting.validate().is_err());
-    /// let setting = ColorSetting::Kelvin(2_000);
+    /// let setting = Color::Kelvin(2_000);
     /// assert!(setting.validate().is_ok());
     /// ```
     pub fn validate(&self) -> Result<(), Error> {
-        use self::ColorSetting::*;
+        use self::Color::*;
         use self::Error::*;
         match self {
             Red | Orange | Yellow | Green | Blue | Purple | Pink | White | Rgb(_) | Custom(_) => {
                 Ok(())
             }
-            self::ColorSetting::Hue(hue) => {
+            self::Color::Hue(hue) => {
                 if *hue > 360 {
                     Err(self::Error::Hue(*hue))
                 } else {
@@ -440,7 +440,7 @@ pub struct State {
     pub power: Option<Power>,
     /// The desired color setting, if appropriate.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub color: Option<ColorSetting>,
+    pub color: Option<Color>,
     /// The desired brightness level (0–1), if appropriate. Will take priority over any brightness
     /// specified in a color setting.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -453,14 +453,14 @@ pub struct State {
     pub infrared: Option<f32>,
 }
 
-impl<'de> Deserialize<'de> for ColorSetting {
+impl<'de> Deserialize<'de> for Color {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<(Self), D::Error> {
         let s = String::deserialize(deserializer)?;
         s.parse::<Self>().map_err(DeError::custom)
     }
 }
 
-impl Serialize for ColorSetting {
+impl Serialize for Color {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_str(&format!("{}", self))
     }
@@ -527,10 +527,10 @@ impl State {
     /// ### Examples
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::{ColorSetting::*, State};
+    /// use lifx::http::{Color::*, State};
     /// let new: State = State::builder().color(Red).finalize();
     /// ```
-    pub fn color(&mut self, color: ColorSetting) -> &'_ mut Self {
+    pub fn color(&mut self, color: Color) -> &'_ mut Self {
         self.color = Some(color);
         self
     }
@@ -551,7 +551,7 @@ impl State {
     /// ### Examples
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::{ColorSetting::*, State};
+    /// use lifx::http::{Color::*, State};
     /// let new: State = State::builder().color(Red).transition(Duration::from_millis(800)).finalize();
     /// ```
     pub fn transition<D: Into<Duration>>(&mut self, duration: D) -> &'_ mut Self {
@@ -573,7 +573,7 @@ impl State {
     ///
     /// ### Example
     /// ```
-    /// use lifx::http::{ColorSetting::*, State};
+    /// use lifx::http::{Color::*, State};
     /// let new: State = State::builder().power(true).brightness(0.5).finalize();
     /// let new: State = State::builder().color(Red).finalize();
     /// ```
@@ -672,7 +672,7 @@ mod tests {
             let state = State::builder()
                 .power(true)
                 .transition(::std::time::Duration::from_secs(1))
-                .color(ColorSetting::White)
+                .color(Color::White)
                 .infrared(0.7)
                 .brightness(0.3)
                 .finalize();
@@ -710,140 +710,140 @@ mod tests {
         use super::*;
         #[test]
         fn serialize() {
-            let color = ColorSetting::Red;
+            let color = Color::Red;
             assert_eq!(&format!("{}", color), "red");
-            let color = ColorSetting::Orange;
+            let color = Color::Orange;
             assert_eq!(&format!("{}", color), "orange");
-            let color = ColorSetting::Yellow;
+            let color = Color::Yellow;
             assert_eq!(&format!("{}", color), "yellow");
-            let color = ColorSetting::Green;
+            let color = Color::Green;
             assert_eq!(&format!("{}", color), "green");
-            let color = ColorSetting::Blue;
+            let color = Color::Blue;
             assert_eq!(&format!("{}", color), "blue");
-            let color = ColorSetting::Purple;
+            let color = Color::Purple;
             assert_eq!(&format!("{}", color), "purple");
-            let color = ColorSetting::Pink;
+            let color = Color::Pink;
             assert_eq!(&format!("{}", color), "pink");
-            let color = ColorSetting::White;
+            let color = Color::White;
             assert_eq!(&format!("{}", color), "white");
-            let color = ColorSetting::Custom("cyan".to_string());
+            let color = Color::Custom("cyan".to_string());
             assert_eq!(&format!("{}", color), "cyan");
-            let color = ColorSetting::Hue(240);
+            let color = Color::Hue(240);
             assert_eq!(&format!("{}", color), "hue:240");
-            let color = ColorSetting::Saturation(0.531);
+            let color = Color::Saturation(0.531);
             assert_eq!(&format!("{}", color), "saturation:0.531");
-            let color = ColorSetting::Brightness(0.3);
+            let color = Color::Brightness(0.3);
             assert_eq!(&format!("{}", color), "brightness:0.3");
-            let color = ColorSetting::Kelvin(3500);
+            let color = Color::Kelvin(3500);
             assert_eq!(&format!("{}", color), "kelvin:3500");
-            let color = ColorSetting::Rgb([0, 17, 36]);
+            let color = Color::Rgb([0, 17, 36]);
             assert_eq!(&format!("{}", color), "rgb:0,17,36");
-            let color = ColorSetting::RgbStr("123456".to_string());
+            let color = Color::RgbStr("123456".to_string());
             assert_eq!(&format!("{}", color), "#123456");
-            let color = ColorSetting::RgbStr("#000000".to_string());
+            let color = Color::RgbStr("#000000".to_string());
             assert_eq!(&format!("{}", color), "#000000");
         }
         #[test]
         fn deserialize() {
             let color = "red".parse();
-            assert_eq!(color, Ok(ColorSetting::Red));
+            assert_eq!(color, Ok(Color::Red));
             let color = "orange".parse();
-            assert_eq!(color, Ok(ColorSetting::Orange));
+            assert_eq!(color, Ok(Color::Orange));
             let color = "yellow".parse();
-            assert_eq!(color, Ok(ColorSetting::Yellow));
+            assert_eq!(color, Ok(Color::Yellow));
             let color = "green".parse();
-            assert_eq!(color, Ok(ColorSetting::Green));
+            assert_eq!(color, Ok(Color::Green));
             let color = "blue".parse();
-            assert_eq!(color, Ok(ColorSetting::Blue));
+            assert_eq!(color, Ok(Color::Blue));
             let color = "purple".parse();
-            assert_eq!(color, Ok(ColorSetting::Purple));
+            assert_eq!(color, Ok(Color::Purple));
             let color = "pink".parse();
-            assert_eq!(color, Ok(ColorSetting::Pink));
+            assert_eq!(color, Ok(Color::Pink));
             let color = "white".parse();
-            assert_eq!(color, Ok(ColorSetting::White));
-            let color = "cyan".parse::<ColorSetting>();
+            assert_eq!(color, Ok(Color::White));
+            let color = "cyan".parse::<Color>();
             assert!(color.is_err());
             let color = "hue:240".parse();
-            assert_eq!(color, Ok(ColorSetting::Hue(240)));
+            assert_eq!(color, Ok(Color::Hue(240)));
             let color = "saturation:0.531".parse();
-            assert_eq!(color, Ok(ColorSetting::Saturation(0.531)));
+            assert_eq!(color, Ok(Color::Saturation(0.531)));
             let color = "brightness:0.3".parse();
-            assert_eq!(color, Ok(ColorSetting::Brightness(0.3)));
+            assert_eq!(color, Ok(Color::Brightness(0.3)));
             let color = "kelvin:3500".parse();
-            assert_eq!(color, Ok(ColorSetting::Kelvin(3500)));
+            assert_eq!(color, Ok(Color::Kelvin(3500)));
             let color = "rgb:0,17,36".parse();
-            assert_eq!(color, Ok(ColorSetting::Rgb([0, 17, 36])));
+            assert_eq!(color, Ok(Color::Rgb([0, 17, 36])));
             let color = "#123456".parse();
-            assert_eq!(color, Ok(ColorSetting::RgbStr("#123456".to_string())));
+            assert_eq!(color, Ok(Color::RgbStr("#123456".to_string())));
             let color = "#000000".parse();
-            assert_eq!(color, Ok(ColorSetting::RgbStr("#000000".to_string())));
+            assert_eq!(color, Ok(Color::RgbStr("#000000".to_string())));
         }
         #[test]
         fn validate() {
-            let color = ColorSetting::Red;
+            let color = Color::Red;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Orange;
+            let color = Color::Orange;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Yellow;
+            let color = Color::Yellow;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Green;
+            let color = Color::Green;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Blue;
+            let color = Color::Blue;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Purple;
+            let color = Color::Purple;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::White;
+            let color = Color::White;
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Hue(370);
+            let color = Color::Hue(370);
             assert_eq!(color.validate(), Err(Error::Hue(370)));
-            let color = ColorSetting::Hue(300);
+            let color = Color::Hue(300);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Hue(0);
+            let color = Color::Hue(0);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Hue(0);
+            let color = Color::Hue(0);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Saturation(-1.0);
+            let color = Color::Saturation(-1.0);
             assert_eq!(color.validate(), Err(Error::SaturationLow(-1.0)));
-            let color = ColorSetting::Saturation(0.0);
+            let color = Color::Saturation(0.0);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Saturation(1.0);
+            let color = Color::Saturation(1.0);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Saturation(2.0);
+            let color = Color::Saturation(2.0);
             assert_eq!(color.validate(), Err(Error::SaturationHigh(2.0)));
-            let color = ColorSetting::Brightness(-0.3);
+            let color = Color::Brightness(-0.3);
             assert_eq!(color.validate(), Err(Error::BrightnessLow(-0.3)));
-            let color = ColorSetting::Brightness(0.0);
+            let color = Color::Brightness(0.0);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Brightness(3.4);
+            let color = Color::Brightness(3.4);
             assert_eq!(color.validate(), Err(Error::BrightnessHigh(3.4)));
-            let color = ColorSetting::Kelvin(1000);
+            let color = Color::Kelvin(1000);
             assert_eq!(color.validate(), Err(Error::KelvinLow(1000)));
-            let color = ColorSetting::Kelvin(1500);
+            let color = Color::Kelvin(1500);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Kelvin(9000);
+            let color = Color::Kelvin(9000);
             assert!(color.validate().is_ok());
-            let color = ColorSetting::Kelvin(9001);
+            let color = Color::Kelvin(9001);
             assert_eq!(color.validate(), Err(Error::KelvinHigh(9001)));
-            let color = ColorSetting::RgbStr("#12345".to_string());
+            let color = Color::RgbStr("#12345".to_string());
             assert_eq!(
                 color.validate(),
                 Err(Error::RgbStrShort(true, "#12345".to_string()))
             );
-            let color = ColorSetting::RgbStr("12345".to_string());
+            let color = Color::RgbStr("12345".to_string());
             assert_eq!(
                 color.validate(),
                 Err(Error::RgbStrShort(false, "12345".to_string()))
             );
-            let color = ColorSetting::RgbStr("123456".to_string());
+            let color = Color::RgbStr("123456".to_string());
             assert!(color.validate().is_ok());
-            let color = ColorSetting::RgbStr("#123456".to_string());
+            let color = Color::RgbStr("#123456".to_string());
             assert!(color.validate().is_ok());
-            let color = ColorSetting::RgbStr("1234567".to_string());
+            let color = Color::RgbStr("1234567".to_string());
             assert_eq!(
                 color.validate(),
                 Err(Error::RgbStrLong(false, "1234567".to_string()))
             );
-            let color = ColorSetting::RgbStr("#1234567".to_string());
+            let color = Color::RgbStr("#1234567".to_string());
             assert_eq!(
                 color.validate(),
                 Err(Error::RgbStrLong(true, "#1234567".to_string()))

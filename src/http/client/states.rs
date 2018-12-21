@@ -1,6 +1,6 @@
 use crate::http::{
     client::{Client, Request, Selected},
-    state::{ColorSetting, Duration, Power, State, StateChange},
+    state::{Color, Duration, Power, State, StateChange},
     Select,
 };
 use reqwest::Method;
@@ -46,7 +46,7 @@ impl<'a, T: Select> SetState<'a, T> {
         self
     }
     /// Sets the color of all selected bulbs.
-    pub fn color(&'a mut self, color: ColorSetting) -> &'a mut SetState<'a, T> {
+    pub fn color(&'a mut self, color: Color) -> &'a mut SetState<'a, T> {
         self.new.color = Some(color);
         self
     }

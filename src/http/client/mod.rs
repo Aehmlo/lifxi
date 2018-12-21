@@ -2,7 +2,7 @@ use std::string::ToString;
 
 use crate::http::{
     selector::Select,
-    state::{ColorSetting, State, StateChange},
+    state::{Color, State, StateChange},
 };
 use reqwest::{Client as ReqwestClient, Method};
 use serde::Serialize;
@@ -53,7 +53,7 @@ impl Client {
         }
     }
     /// Creates a request to validate the given color.
-    pub fn validate(&self, color: &ColorSetting) -> Request<'_, ()> {
+    pub fn validate(&self, color: &Color) -> Request<'_, ()> {
         Request {
             client: self,
             path: format!("/color?string={}", color),
@@ -148,7 +148,7 @@ where
         }
     }
     /// Creates a request to begin a "breathe" effect.
-    pub fn breathe(&'a self, color: ColorSetting) -> Breathe<'a, T> {
+    pub fn breathe(&'a self, color: Color) -> Breathe<'a, T> {
         Breathe {
             parent: self,
             color,
@@ -162,7 +162,7 @@ where
         }
     }
     /// Creates a request to begin a "pulse" effect.
-    pub fn pulse(&'a self, color: ColorSetting) -> Pulse<'a, T> {
+    pub fn pulse(&'a self, color: Color) -> Pulse<'a, T> {
         Pulse {
             parent: self,
             color,
