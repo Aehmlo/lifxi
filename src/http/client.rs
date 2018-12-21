@@ -314,8 +314,8 @@ pub struct Activate<'a> {
 
 impl<'a> Activate<'a> {
     /// Sets the transition time for the scene activation.
-    pub fn transition(&'a mut self, transition: Duration) -> &'a mut Self {
-        self.transition = Some(transition);
+    pub fn transition<D: Into<Duration>>(&'a mut self, transition: D) -> &'a mut Self {
+        self.transition = Some(transition.into());
         self
     }
     /// Adds a property to the list of ignored properties when changing.
