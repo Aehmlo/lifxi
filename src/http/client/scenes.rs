@@ -72,17 +72,6 @@ impl<'a> Activate<'a> {
     }
 }
 
-impl<'a, 'b: 'a> From<&'b Activate<'a>> for Request<'a, &Activate<'b>> {
-    fn from(activate: &'b Activate<'a>) -> Self {
-        Request {
-            body: &activate,
-            client: activate.parent.client,
-            method: Method::PUT,
-            path: format!("/scenes/scene_id:{}/activate", activate.uuid),
-        }
-    }
-}
-
 impl<'a> AsRequest<ActivatePayload> for Activate<'a> {
     fn method() -> reqwest::Method {
         Method::PUT
@@ -91,7 +80,7 @@ impl<'a> AsRequest<ActivatePayload> for Activate<'a> {
         self.parent.client
     }
     fn path(&self) -> String {
-        format!("/scenes/scene_id/{}/activate", self.uuid)
+        format!("/scenes/scene_id:{}/activate", self.uuid)
     }
     fn body(&self) -> &'_ ActivatePayload {
         &self.inner

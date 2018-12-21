@@ -94,7 +94,7 @@ impl<'a, T: Select> AsRequest<BreathePayload<'a, T>> for Breathe<'a, T> {
         self.parent.client
     }
     fn path(&self) -> String {
-        format!("/lights/{}/effeects/breathe", self.parent.selector)
+        format!("/lights/{}/effects/breathe", self.parent.selector)
     }
     fn body(&self) -> &'_ BreathePayload<'a, T> {
         &self.inner
@@ -182,7 +182,7 @@ impl<'a, T: Select> AsRequest<PulsePayload<'a, T>> for Pulse<'a, T> {
         self.parent.client
     }
     fn path(&self) -> String {
-        format!("/lights/{}/effeects/pulse", self.parent.selector)
+        format!("/lights/{}/effects/pulse", self.parent.selector)
     }
     fn body(&self) -> &'_ PulsePayload<'a, T> {
         &self.inner
