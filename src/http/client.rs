@@ -34,6 +34,17 @@ impl Client {
             selector,
         }
     }
+    /// Creates a request to set multiple states (on multiple lights).
+    ///
+    /// For a simpler API when working with a single state on one or multiple lights, see
+    /// [`Selected::set_state`](struct.Selected.html#method.set_state).
+    pub fn set_states(&self) -> SetStates<'_> {
+        SetStates {
+            parent: self,
+            default: None,
+            new: Vec::new(),
+        }
+    }
     /// Creates a request to validate the given color.
     pub fn validate(&self, color: &ColorSetting) -> Request<'_, ()> {
         Request {
@@ -170,6 +181,51 @@ impl<'a, T: Select> From<&SetState<'a, T>> for Request<'a, State> {
             client: state.parent.client,
             path: format!("/lights/{}/state", state.parent.selector),
             body: state.new.clone(),
+            method: Method::PUT,
+        }
+    }
+}
+
+#[derive(Clone, Serialize)]
+struct StateExt {
+    selector: String,
+    #[serde(flatten)]
+    state: State,
+}
+
+/// A scoped request to uniformly set the state for all selected bulbs.
+#[derive(Clone, Serialize)]
+pub struct SetStates<'a> {
+    #[serde(skip)]
+    parent: &'a Client,
+    #[serde(rename = "states", skip_serializing_if = "Vec::is_empty")]
+    new: Vec<StateExt>,
+    #[serde(rename = "defaults", skip_serializing_if = "Option::is_none")]
+    default: Option<State>,
+}
+
+impl<'a> SetStates<'a> {
+    /// Adds the given state to the list.
+    pub fn add<T: Select>(&mut self, selector: T, state: State) -> &'_ mut Self {
+        self.new.push(StateExt {
+            selector: format!("{}", selector),
+            state,
+        });
+        self
+    }
+    /// Sets the default properties to use if left unspecified.
+    pub fn default(&mut self, state: State) -> &'_ mut Self {
+        self.default = Some(state);
+        self
+    }
+}
+
+impl<'a, 'b: 'a> From<&'b SetStates<'a>> for Request<'a, &'b SetStates<'a>> {
+    fn from(states: &'b SetStates<'a>) -> Self {
+        Self {
+            client: states.parent,
+            path: "/lights/states".to_string(),
+            body: states,
             method: Method::PUT,
         }
     }
