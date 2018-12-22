@@ -25,7 +25,7 @@ pub enum Product {
 
 impl Product {
     /// Gives the vendor ID of this product.
-    pub const fn vid(&self) -> u32 {
+    pub fn vid(&self) -> u32 {
         1
     }
     /// Gives the vendor ID of this product.
