@@ -24,7 +24,7 @@ pub trait AsRequest<S: Serialize> {
 }
 
 /// The result type for all requests made with the client.
-pub type ClientResult = ::std::result::Result<reqwest::Response, reqwest::Error>;
+pub type ClientResult = Result<reqwest::Response, reqwest::Error>;
 
 /// The crux of the HTTP API. Start here.
 ///
@@ -127,7 +127,8 @@ where
             .request(method, url)
             .bearer_auth(token)
             .json(&self.body)
-            .send()
+            .send()?
+            .error_for_status()
     }
 }
 
