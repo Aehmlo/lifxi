@@ -69,7 +69,7 @@ pub enum SelectorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let selector = "".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::NoLabel));
     /// ```
@@ -78,7 +78,7 @@ pub enum SelectorParseError {
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let selector = "id:".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::NoValue));
     /// let selector = "id".parse::<Selector>();
@@ -92,7 +92,7 @@ pub enum SelectorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let selector = "foo:1".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::UnknownLabel));
     /// ```
@@ -277,7 +277,7 @@ impl Selector {
     /// Constrains the selector to only match the given zone(s).
     /// ## Examples
     /// ```
-    /// use lifx::http::{Selector, Zones};
+    /// use lifxi::http::{Selector, Zones};
     /// // Devices in the "Living Room" group in zones 0 or 1 (ignores devices from other zones).
     /// let sel = Selector::Group("Living Room".to_string()).zoned(0..2);
     /// assert_eq!(&format!("{}", sel), "group:Living Room|0|1");
@@ -336,7 +336,7 @@ where
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let sel = Selector::Group("Living Room".to_string()).random();
     /// assert_eq!(&format!("{}", sel), "group:Living Room:random");
     /// let sel = Selector::Group("Living Room".to_string()).zoned(1).random();

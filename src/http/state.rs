@@ -106,7 +106,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "hue:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoHue));
     /// ```
@@ -115,7 +115,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "hue:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -124,7 +124,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "saturation:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoSaturation));
     /// ```
@@ -133,7 +133,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "saturation:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -142,7 +142,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "brightness:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoBrightness));
     /// ```
@@ -151,7 +151,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "brightness:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -160,7 +160,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "kelvin:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoKelvin));
     /// ```
@@ -169,7 +169,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "kelvin:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -178,7 +178,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoRed));
     /// ```
@@ -187,7 +187,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -196,7 +196,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:0,".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoGreen));
     /// ```
@@ -205,7 +205,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:0,j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -214,7 +214,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:0,1,".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoBlue));
     /// ```
@@ -223,7 +223,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "rgb:0,1,j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -232,7 +232,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "foo".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::ShortString));
     /// ```
@@ -241,7 +241,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let color = "foobarbaz".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::LongString));
     /// ```
@@ -410,7 +410,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Hue(361).validate();
     /// assert_eq!(res, Err(ColorValidationError::Hue(361)));
     /// ```
@@ -419,7 +419,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Saturation(1.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::SaturationHigh(1.1)));
     /// ```
@@ -428,7 +428,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Saturation(-0.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::SaturationLow(-0.1)));
     /// ```
@@ -437,7 +437,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Brightness(1.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::BrightnessHigh(1.1)));
     /// ```
@@ -446,7 +446,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Brightness(-0.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::BrightnessLow(-0.1)));
     /// ```
@@ -455,7 +455,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Kelvin(9001).validate();
     /// assert_eq!(res, Err(ColorValidationError::KelvinHigh(9001)));
     /// ```
@@ -464,7 +464,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::Kelvin(1499).validate();
     /// assert_eq!(res, Err(ColorValidationError::KelvinLow(1499)));
     /// ```
@@ -473,7 +473,7 @@ pub enum Error {
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::RgbStr("12345".to_string()).validate();
     /// assert_eq!(res, Err(ColorValidationError::RgbStrShort(false, "12345".to_string())));
     /// let res = Color::RgbStr("#12345".to_string()).validate();
@@ -484,7 +484,7 @@ pub enum Error {
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let res = Color::RgbStr("1234567".to_string()).validate();
     /// assert_eq!(res, Err(ColorValidationError::RgbStrLong(false, "1234567".to_string())));
     /// let res = Color::RgbStr("#1234567".to_string()).validate();
@@ -531,7 +531,7 @@ impl Color {
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::Color;
+    /// use lifxi::http::Color;
     /// // Too short
     /// let setting = Color::RgbStr("".to_string());
     /// assert!(setting.validate().is_err());
@@ -723,7 +723,7 @@ impl State {
     /// ## Example
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::State;
+    /// use lifxi::http::State;
     /// let new: State = State::builder().power(true).transition(Duration::from_millis(800));
     /// ```
     pub fn power<P: Into<Power>>(mut self, on: P) -> Self {
@@ -735,7 +735,7 @@ impl State {
     /// ## Example
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::{Color::*, State};
+    /// use lifxi::http::{Color::*, State};
     /// let new: State = State::builder().color(Red);
     /// ```
     pub fn color(mut self, color: Color) -> Self {
@@ -747,7 +747,7 @@ impl State {
     /// ## Example
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::State;
+    /// use lifxi::http::State;
     /// let new: State = State::builder().brightness(0.7).transition(Duration::from_millis(800));
     /// ```
     pub fn brightness(mut self, brightness: f32) -> Self {
@@ -759,7 +759,7 @@ impl State {
     /// ## Example
     /// ```
     /// use std::time::Duration;
-    /// use lifx::http::{Color::*, State};
+    /// use lifxi::http::{Color::*, State};
     /// let new: State = State::builder().color(Red).transition(Duration::from_millis(800));
     /// ```
     pub fn transition<D: Into<Duration>>(mut self, duration: D) -> Self {
@@ -770,7 +770,7 @@ impl State {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::State;
+    /// use lifxi::http::State;
     /// let new: State = State::builder().infrared(0.8);
     /// ```
     pub fn infrared(mut self, infrared: f32) -> Self {
@@ -824,7 +824,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().power(true);
     /// ```
     pub fn power<P: Into<Power>>(mut self, on: P) -> Self {
@@ -835,7 +835,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().transition(::std::time::Duration::from_secs(1));
     /// ```
     pub fn transition<T: Into<Duration>>(mut self, duration: T) -> Self {
@@ -846,7 +846,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().hue(-60);
     /// ```
     pub fn hue(mut self, hue: i16) -> Self {
@@ -857,7 +857,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().saturation(-0.1);
     /// ```
     pub fn saturation(mut self, saturation: f32) -> Self {
@@ -868,7 +868,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().brightness(0.4);
     /// ```
     pub fn brightness(mut self, brightness: f32) -> Self {
@@ -879,7 +879,7 @@ impl StateChange {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::StateChange;
+    /// use lifxi::http::StateChange;
     /// let new: StateChange = StateChange::builder().kelvin(-200);
     /// ```
     pub fn kelvin(mut self, temp: i16) -> Self {

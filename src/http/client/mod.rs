@@ -40,7 +40,7 @@ impl Client {
     ///
     /// ## Examples
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// let secret = "foo";
     /// let client = Client::new(secret);
     /// let secret = "foo".to_string();
@@ -74,7 +74,7 @@ impl Client {
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -173,7 +173,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -194,7 +194,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -215,7 +215,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -238,7 +238,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -260,7 +260,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -285,7 +285,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// fn client() -> Client {
     ///     // TODO: Add lazy-static dependency and use it to make a shared client.
     ///     unimplemented!()
@@ -319,7 +319,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifx::http::*;
+    /// use lifxi::http::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
