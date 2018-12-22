@@ -7,6 +7,7 @@ use reqwest::Method;
 
 #[derive(Clone, Serialize)]
 #[doc(hidden)]
+/// The message constructed by the `Breathe` request builder.
 pub struct BreathePayload<'a, T: Select> {
     color: Color,
     selector: &'a T,
@@ -40,6 +41,25 @@ impl<'a, T: Select> BreathePayload<'a, T> {
 }
 
 /// Specifies a "breathe" effect, wherein the light color fades smoothly to transition.
+///
+/// ## Example
+/// ```
+/// use lifx::http::*;
+/// # fn run() {
+/// let secret = "foo";
+/// let client = Client::new(secret);
+/// let result = client
+///     .select(Selector::All)
+///     .breathe(Color::Green)
+///     .from(Color::Red)
+///     .period(::std::time::Duration::new(1, 0))
+///     .cycles(10)
+///     .persist(true)
+///     .power(true)
+///     .peak(0.5)
+///     .send();
+/// # }
+/// ```
 pub struct Breathe<'a, T: Select> {
     pub(crate) parent: &'a Selected<'a, T>,
     inner: BreathePayload<'a, T>,
@@ -55,31 +75,115 @@ impl<'a, T: Select> Breathe<'a, T> {
     /// Sets the starting color.
     ///
     /// If left blank, the current color of the bulb is used.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .from(Color::Red)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn from(&mut self, color: Color) -> &'_ mut Self {
         self.inner.from = Some(color);
         self
     }
     /// Sets the animation duration.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .period(::std::time::Duration::new(3,0))
+    ///     .send();
+    /// # }
+    /// ```
     pub fn period<D: Into<Duration>>(&mut self, period: D) -> &'_ mut Self {
         self.inner.period = Some(period.into());
         self
     }
     /// Sets the number of cycles to execute.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .cycles(7)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn cycles(&mut self, count: u16) -> &'_ mut Self {
         self.inner.cycles = Some(count);
         self
     }
     /// Sets whether to keep the bulb at the stopping color after completion.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .persist(true)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn persist(&mut self, keep: bool) -> &'_ mut Self {
         self.inner.persist = Some(keep);
         self
     }
     /// Sets whether to power on the light if currently off.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .power(true)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn power(&mut self, force: bool) -> &'_ mut Self {
         self.inner.power_on = Some(force);
         self
     }
     /// Sets when the peak of the animation should be (0–1, proportion of period).
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .breathe(Color::Green)
+    ///     .peak(0.3)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn peak(&mut self, frac: f32) -> &'_ mut Self {
         self.inner.peak = Some(frac);
         self
@@ -103,6 +207,7 @@ impl<'a, T: Select> AsRequest<BreathePayload<'a, T>> for Breathe<'a, T> {
 
 #[derive(Clone, Serialize)]
 #[doc(hidden)]
+/// The message constructed by the `Pulse` request builder.
 pub struct PulsePayload<'a, T: Select> {
     color: Color,
     selector: &'a T,
@@ -148,26 +253,96 @@ impl<'a, T: Select> Pulse<'a, T> {
     /// Sets the starting color.
     ///
     /// If left blank, the current color of the bulb is used.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .pulse(Color::Green)
+    ///     .from(Color::Red)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn from(&mut self, color: Color) -> &'_ mut Self {
         self.inner.from = Some(color);
         self
     }
     /// Sets the animation duration.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .pulse(Color::Green)
+    ///     .period(::std::time::Duration::new(7, 0))
+    ///     .send();
+    /// # }
+    /// ```
     pub fn period<D: Into<Duration>>(&mut self, period: D) -> &'_ mut Self {
         self.inner.period = Some(period.into());
         self
     }
     /// Sets the number of cycles to execute.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .pulse(Color::Green)
+    ///     .cycles(11)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn cycles(&mut self, count: u16) -> &'_ mut Self {
         self.inner.cycles = Some(count);
         self
     }
     /// Sets whether to keep the bulb at the stopping color after completion.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .pulse(Color::Green)
+    ///     .persist(true)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn persist(&mut self, keep: bool) -> &'_ mut Self {
         self.inner.persist = Some(keep);
         self
     }
     /// Sets whether to power on the light if currently off.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// # fn run() {
+    /// let secret = "foo";
+    /// let client = Client::new(secret);
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .pulse(Color::Green)
+    ///     .power(true)
+    ///     .send();
+    /// # }
+    /// ```
     pub fn power(&mut self, force: bool) -> &'_ mut Self {
         self.inner.power_on = Some(force);
         self

@@ -9,12 +9,12 @@ use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializ
 /// All resolutions of selectors are treated as sets, even if they are logically a single device,
 /// for consistency with the API (and to help prevent breakage).
 ///
-/// ### Constraining Selectors
+/// ## Constraining Selectors
 ///
 /// Selectors may be constrained to specific zones with
 /// [the `zoned` method on `Selector`](#method.zoned).
 ///
-/// ### Randomization
+/// ## Randomization
 ///
 /// A random device can be chosen from the list of devices matching a selector via
 /// [the `Randomize` trait](trait.Randomize.html).
@@ -41,6 +41,8 @@ pub enum Selector {
     /// Specifies a collection of devices based on a location with the given label.
     Location(String),
     /// Specifies a collection of devices from a scene with the given ID.
+    ///
+    /// To get a list of scene IDs, use [`Scenes::list`](struct.Scenes.html#method.list).
     SceneId(String),
 }
 
@@ -64,10 +66,36 @@ impl fmt::Display for Selector {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SelectorParseError {
     /// The selector was neither "all" nor prefixed with a label.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let selector = "".parse::<Selector>();
+    /// assert_eq!(selector, Err(SelectorParseError::NoLabel));
+    /// ```
     NoLabel,
     /// The selector contained a label but no following value.
+    ///
+    /// ## Examples
+    /// ```
+    /// use lifx::http::*;
+    /// let selector = "id:".parse::<Selector>();
+    /// assert_eq!(selector, Err(SelectorParseError::NoValue));
+    /// let selector = "id".parse::<Selector>();
+    /// assert_eq!(selector, Err(SelectorParseError::NoValue));
+    /// // If no value is given, we fail fast and don't even validate the label.
+    /// let selector = "bar:".parse::<Selector>();
+    /// assert_eq!(selector, Err(SelectorParseError::NoValue));
+    /// ```
     NoValue,
     /// The selector contained an unknown label.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let selector = "foo:1".parse::<Selector>();
+    /// assert_eq!(selector, Err(SelectorParseError::UnknownLabel));
+    /// ```
     UnknownLabel,
 }
 
@@ -95,7 +123,13 @@ impl FromStr for Selector {
             x => {
                 let mut parts = x.split(':');
                 if let Some(label) = parts.next() {
+                    if label.trim().is_empty() {
+                        return Err(NoLabel);
+                    }
                     if let Some(value) = parts.next().map(|p| p.trim().to_string()) {
+                        if value.trim().is_empty() {
+                            return Err(NoValue);
+                        }
                         match label {
                             "label" => Ok(Label(value)),
                             "id" => Ok(Id(value)),
@@ -132,6 +166,10 @@ impl Serialize for Selector {
 
 #[doc(hidden)]
 /// A selector that has been constrained to specific zones.
+///
+/// ## Randomization
+/// Like root-level selectors, zoned selectors may be randomized using
+/// [the `Randomize` trait](trait.Randomize.html).
 pub struct Zoned {
     selector: Selector,
     zoning: Zones,
@@ -154,7 +192,7 @@ impl Serialize for Zoned {
 }
 
 #[doc(hidden)]
-/// Represents a set of zones. Used to constrain selectors further.
+/// Represents a set of zones. Used to constrain selectors further. Not for direct use.
 pub struct Zones {
     list: Vec<u8>,
 }
@@ -219,6 +257,8 @@ impl From<u8> for Zones {
 
 #[doc(hidden)]
 /// A selector that randomly chooses a device from the resultant list.
+///
+/// Created by [`Randomize::random`](trait.Randomize.html#method.random).
 pub struct Random<T: PureSelect>(T);
 
 impl<T: PureSelect> fmt::Display for Random<T> {
@@ -235,9 +275,9 @@ impl<T: PureSelect> Serialize for Random<T> {
 
 impl Selector {
     /// Constrains the selector to only match the given zone(s).
-    /// ### Examples
+    /// ## Examples
     /// ```
-    /// use lifx::http::Selector;
+    /// use lifx::http::{Selector, Zones};
     /// // Devices in the "Living Room" group in zones 0 or 1 (ignores devices from other zones).
     /// let sel = Selector::Group("Living Room".to_string()).zoned(0..2);
     /// assert_eq!(&format!("{}", sel), "group:Living Room|0|1");
@@ -253,6 +293,11 @@ impl Selector {
     /// // Zones 1 or 255 only.
     /// let sel = Selector::Group("Living Room".to_string()).zoned(vec![1, 255]);
     /// assert_eq!(&format!("{}", sel), "group:Living Room|1|255");
+    /// // Zones 1 or 37 only.
+    /// let zones = vec![1, 37];
+    /// let iter = zones.iter(); // Or any I: Iterator<Item = u8> (or Iterator<Item = &u8>).
+    /// let sel = Selector::Group("Living Room".to_string()).zoned(iter.collect::<Zones>());
+    /// assert_eq!(&format!("{}", sel), "group:Living Room|1|37");
     /// ```
     pub fn zoned<T>(self, z: T) -> Zoned
     where
@@ -289,7 +334,7 @@ where
 {
     /// Creates a selector which will choose a random device from the list.
     ///
-    /// ### Examples
+    /// ## Examples
     /// ```
     /// use lifx::http::*;
     /// let sel = Selector::Group("Living Room".to_string()).random();

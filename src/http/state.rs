@@ -103,36 +103,148 @@ impl fmt::Display for Color {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ColorParseError {
     /// No hue was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "hue:".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoHue));
+    /// ```
     NoHue,
     /// The hue could not be parsed as an integer.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "hue:j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericHue(ParseIntError),
     /// No saturation was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "saturation:".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoSaturation));
+    /// ```
     NoSaturation,
     /// The saturation could not be parsed as a float.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "saturation:j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericSaturation(ParseFloatError),
     /// No brightness was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "brightness:".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoBrightness));
+    /// ```
     NoBrightness,
     /// The brightness could not be parsed as a float.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "brightness:j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericBrightness(ParseFloatError),
     /// No color temperature was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "kelvin:".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoKelvin));
+    /// ```
     NoKelvin,
     /// The color temperature could not be parsed as an integer.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "kelvin:j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericKelvin(ParseIntError),
     /// No red component was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoRed));
+    /// ```
     NoRed,
     /// The red component could not be parsed as an integer.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericRed(ParseIntError),
     /// No green component was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:0,".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoGreen));
+    /// ```
     NoGreen,
     /// The green component could not be parsed as an integer.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:0,j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericGreen(ParseIntError),
     /// No blue component was given.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:0,1,".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::NoBlue));
+    /// ```
     NoBlue,
     /// The blue component could not be parsed as an integer.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "rgb:0,1,j".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
     NonNumericBlue(ParseIntError),
     /// The string is too short to be an RGB string and was not recognized as a keyword.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "foo".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::ShortString));
+    /// ```
     ShortString,
     /// The string is too long to be an RGB string and was not recognized as a keyword.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let color = "foobarbaz".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::LongString));
+    /// ```
     LongString,
 }
 
@@ -170,7 +282,7 @@ impl FromStr for Color {
     type Err = ColorParseError;
     /// Parses the color string into a color setting.
     ///
-    /// ### Notes
+    /// ## Notes
     /// Custom colors cannot be made with this method; use `Color::Custom(s)` instead.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::Color::*;
@@ -186,32 +298,48 @@ impl FromStr for Color {
             "white" => Ok(White),
             hue if hue.starts_with("hue:") => {
                 if let Some(spec) = hue.split(':').nth(1) {
-                    let hue = spec.parse();
-                    hue.map(Hue).map_err(NonNumericHue)
+                    if spec.trim().is_empty() {
+                        Err(NoHue)
+                    } else {
+                        let hue = spec.parse();
+                        hue.map(Hue).map_err(NonNumericHue)
+                    }
                 } else {
                     Err(NoHue)
                 }
             }
             s if s.starts_with("saturation:") => {
                 if let Some(spec) = s.split(':').nth(1) {
-                    let s = spec.parse();
-                    s.map(Saturation).map_err(NonNumericSaturation)
+                    if spec.trim().is_empty() {
+                        Err(NoSaturation)
+                    } else {
+                        let s = spec.parse();
+                        s.map(Saturation).map_err(NonNumericSaturation)
+                    }
                 } else {
                     Err(NoSaturation)
                 }
             }
             b if b.starts_with("brightness:") => {
                 if let Some(spec) = b.split(':').nth(1) {
-                    let b = spec.parse();
-                    b.map(Brightness).map_err(NonNumericBrightness)
+                    if spec.trim().is_empty() {
+                        Err(NoBrightness)
+                    } else {
+                        let b = spec.parse();
+                        b.map(Brightness).map_err(NonNumericBrightness)
+                    }
                 } else {
                     Err(NoBrightness)
                 }
             }
             k if k.starts_with("kelvin:") => {
                 if let Some(spec) = k.split(':').nth(1) {
-                    let k = spec.parse();
-                    k.map(Kelvin).map_err(NonNumericKelvin)
+                    if spec.trim().is_empty() {
+                        Err(NoKelvin)
+                    } else {
+                        let k = spec.parse();
+                        k.map(Kelvin).map_err(NonNumericKelvin)
+                    }
                 } else {
                     Err(NoKelvin)
                 }
@@ -222,8 +350,17 @@ impl FromStr for Color {
                 if let Some(parts) = split.nth(1) {
                     let mut parts = parts.split(',');
                     if let Some(r) = parts.next() {
+                        if r.trim().is_empty() {
+                            return Err(NoRed);
+                        }
                         if let Some(g) = parts.next() {
+                            if g.trim().is_empty() {
+                                return Err(NoGreen);
+                            }
                             if let Some(b) = parts.next() {
+                                if b.trim().is_empty() {
+                                    return Err(NoBlue);
+                                }
                                 match r.parse() {
                                     Ok(r) => match g.parse() {
                                         Ok(g) => match b.parse() {
@@ -270,22 +407,89 @@ impl FromStr for Color {
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// The given hue was greater than the maximum hue of 360.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Hue(361).validate();
+    /// assert_eq!(res, Err(ColorValidationError::Hue(361)));
+    /// ```
     Hue(u16),
     /// The given saturation was greater than 1.0.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Saturation(1.1).validate();
+    /// assert_eq!(res, Err(ColorValidationError::SaturationHigh(1.1)));
+    /// ```
     SaturationHigh(f32),
     /// The given saturation was less than 0.0.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Saturation(-0.1).validate();
+    /// assert_eq!(res, Err(ColorValidationError::SaturationLow(-0.1)));
+    /// ```
     SaturationLow(f32),
     /// The given brightness was greater than 1.0.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Brightness(1.1).validate();
+    /// assert_eq!(res, Err(ColorValidationError::BrightnessHigh(1.1)));
+    /// ```
     BrightnessHigh(f32),
     /// The given brightness was less than 0.0.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Brightness(-0.1).validate();
+    /// assert_eq!(res, Err(ColorValidationError::BrightnessLow(-0.1)));
+    /// ```
     BrightnessLow(f32),
     /// The given temperature was greater than 9000 K.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Kelvin(9001).validate();
+    /// assert_eq!(res, Err(ColorValidationError::KelvinHigh(9001)));
+    /// ```
     KelvinHigh(u16),
     /// The given temperature was less than 1500 K.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::Kelvin(1499).validate();
+    /// assert_eq!(res, Err(ColorValidationError::KelvinLow(1499)));
+    /// ```
     KelvinLow(u16),
     /// The given RGB string was too short.
+    ///
+    /// ## Examples
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::RgbStr("12345".to_string()).validate();
+    /// assert_eq!(res, Err(ColorValidationError::RgbStrShort(false, "12345".to_string())));
+    /// let res = Color::RgbStr("#12345".to_string()).validate();
+    /// assert_eq!(res, Err(ColorValidationError::RgbStrShort(true, "#12345".to_string())));
+    /// ```
     RgbStrShort(bool, String),
     /// The given RGB string was too long.
+    ///
+    /// ## Examples
+    /// ```
+    /// use lifx::http::*;
+    /// let res = Color::RgbStr("1234567".to_string()).validate();
+    /// assert_eq!(res, Err(ColorValidationError::RgbStrLong(false, "1234567".to_string())));
+    /// let res = Color::RgbStr("#1234567".to_string()).validate();
+    /// assert_eq!(res, Err(ColorValidationError::RgbStrLong(true, "#1234567".to_string())));
+    /// ```
     RgbStrLong(bool, String),
 }
 
@@ -322,10 +526,10 @@ impl ::std::error::Error for Error {}
 impl Color {
     /// Checks whether the color is valid.
     ///
-    /// ### Notes
+    /// ## Notes
     /// Custom color strings are not validated.
     ///
-    /// ### Examples
+    /// ## Examples
     /// ```
     /// use lifx::http::Color;
     /// // Too short
@@ -516,7 +720,7 @@ impl State {
     }
     /// Builder function to set target power setting.
     ///
-    /// ### Examples
+    /// ## Example
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::State;
@@ -528,7 +732,7 @@ impl State {
     }
     /// Builder function to set target color setting.
     ///
-    /// ### Examples
+    /// ## Example
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::{Color::*, State};
@@ -540,7 +744,7 @@ impl State {
     }
     /// Builder function to set target brightness setting.
     ///
-    /// ### Examples
+    /// ## Example
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::State;
@@ -552,7 +756,7 @@ impl State {
     }
     /// Builder function to set animation duration.
     ///
-    /// ### Examples
+    /// ## Example
     /// ```
     /// use std::time::Duration;
     /// use lifx::http::{Color::*, State};
@@ -564,7 +768,7 @@ impl State {
     }
     /// Builder function to set target maximum infrared level.
     ///
-    /// ### Examples
+    /// ## Example
     /// ```
     /// use lifx::http::State;
     /// let new: State = State::builder().infrared(0.8);
@@ -617,31 +821,67 @@ impl StateChange {
         Self::default()
     }
     /// Builder function to change target power state.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().power(true);
+    /// ```
     pub fn power<P: Into<Power>>(mut self, on: P) -> Self {
         self.power = Some(on.into());
         self
     }
     /// Builder function to change transition duration.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().transition(::std::time::Duration::from_secs(1));
+    /// ```
     pub fn transition<T: Into<Duration>>(mut self, duration: T) -> Self {
         self.duration = Some(duration.into());
         self
     }
     /// Builder function to set target change in hue.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().hue(-60);
+    /// ```
     pub fn hue(mut self, hue: i16) -> Self {
         self.hue = Some(hue);
         self
     }
     /// Builder function to set target change in saturation.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().saturation(-0.1);
+    /// ```
     pub fn saturation(mut self, saturation: f32) -> Self {
         self.saturation = Some(saturation);
         self
     }
     /// Builder function to set target change in brightness.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().brightness(0.4);
+    /// ```
     pub fn brightness(mut self, brightness: f32) -> Self {
         self.brightness = Some(brightness);
         self
     }
     /// Builder function to set target change in color temperature.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifx::http::StateChange;
+    /// let new: StateChange = StateChange::builder().kelvin(-200);
+    /// ```
     pub fn kelvin(mut self, temp: i16) -> Self {
         self.kelvin = Some(temp);
         self
