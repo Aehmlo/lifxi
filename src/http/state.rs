@@ -53,6 +53,10 @@ pub enum Color {
     ///
     /// The temperature should be between 1500 and 9000.
     Kelvin(u16),
+    /// Used to specify more than one of hue, saturation, brightness, and color temperature.
+    ///
+    /// See `Hue`, `Saturation`, `Brightness`, and `Kelvin`. `None` values are ignored.
+    Hsbk(Option<u16>, Option<f32>, Option<f32>, Option<u16>),
     /// Sets the color to an RGB color using the given numeric components.
     ///
     /// It is preferred to use this over `RgbStr` where posssible.
@@ -86,6 +90,19 @@ impl fmt::Display for Color {
             Color::Saturation(sat) => write!(f, "saturation:{}", sat),
             Color::Brightness(b) => write!(f, "brightness:{}", b),
             Color::Kelvin(t) => write!(f, "kelvin:{}", t),
+            Color::Hsbk(hue, sat, bright, kelvin) => {
+                let hue = hue.map(|hue| format!("hue:{}", hue));
+                let sat = sat.map(|saturation| format!("saturation:{}", saturation));
+                let bright = bright.map(|brightness| format!("brightness:{}", brightness));
+                let kelvin = kelvin.map(|kelvin| format!("kelvin:{}", kelvin));
+                let vec: Vec<_> = [hue, sat, bright, kelvin]
+                    .into_iter()
+                    .cloned()
+                    .filter_map(|c| c)
+                    .collect();
+                let s = vec.join(" ");
+                write!(f, "{}", s)
+            }
             Color::Rgb(rgb) => write!(f, "rgb:{},{},{}", rgb[0], rgb[1], rgb[2]),
             Color::RgbStr(s) => {
                 if s.starts_with('#') {
@@ -174,6 +191,52 @@ pub enum ColorParseError {
     /// assert!(color.is_err());
     /// ```
     NonNumericKelvin(ParseIntError),
+    /// When parsing our way through what looked like an HSBK color, we found another color.
+    ///
+    ///
+    /// ## Example
+    /// ```
+    /// use lifxi::http::*;
+    /// let color = "hue:100 rgb:0,0,0".parse::<Color>();
+    /// assert!(color.is_err());
+    /// ```
+    WeirdHsbkComponent(Color),
+    /// Multiple hues were specified.
+    ///
+    /// ##
+    /// ```
+    /// use lifxi::http::*;
+    /// let color = "hue:100 hue:100".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::MultipleHues));
+    /// ```
+    MultipleHues,
+    /// Multiple hues were specified.
+    ///
+    /// ##
+    /// ```
+    /// use lifxi::http::*;
+    /// let color = "saturation:100 saturation:100".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::MultipleSaturations));
+    /// ```
+    MultipleSaturations,
+    /// Multiple hues were specified.
+    ///
+    /// ##
+    /// ```
+    /// use lifxi::http::*;
+    /// let color = "brightness:0.4 brightness:0.4".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::MultipleBrightnesses));
+    /// ```
+    MultipleBrightnesses,
+    /// Multiple hues were specified.
+    ///
+    /// ##
+    /// ```
+    /// use lifxi::http::*;
+    /// let color = "kelvin:2000 kelvin:2000".parse::<Color>();
+    /// assert_eq!(color, Err(ColorParseError::MultipleKelvins));
+    /// ```
+    MultipleKelvins,
     /// No red component was given.
     ///
     /// ## Example
@@ -260,6 +323,11 @@ impl fmt::Display for ColorParseError {
             NonNumericBrightness(e) => write!(f, "Failed to parse brightness as float: {}", e),
             NoKelvin => write!(f, "Expected color temperature after kelvin: label."),
             NonNumericKelvin(e) => write!(f, "Failed to parse color temperature as integer: {}", e),
+            WeirdHsbkComponent(c) => write!(f, "Found another color while parsing as HSBK: {}", c),
+            MultipleHues => write!(f, "Encountered multiple hue specifications."),
+            MultipleSaturations => write!(f, "Encountered multiple saturation specifications."),
+            MultipleBrightnesses => write!(f, "Encountered multiple brightness specifications."),
+            MultipleKelvins => write!(f, "Encountered multiple color temperature specifications."),
             NoRed => write!(f, "Expected red component after rgb: label."),
             NonNumericRed(e) => write!(f, "Failed to parse red component as integer: {}", e),
             NoGreen => write!(f, "Expected green component after comma."),
@@ -284,6 +352,7 @@ impl FromStr for Color {
     ///
     /// ## Notes
     /// Custom colors cannot be made with this method; use `Color::Custom(s)` instead.
+    #[allow(clippy::cyclomatic_complexity)]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         use self::Color::*;
         use self::ColorParseError::*;
@@ -296,6 +365,41 @@ impl FromStr for Color {
             "purple" => Ok(Purple),
             "pink" => Ok(Pink),
             "white" => Ok(White),
+            s if s.split(' ').count() > 1 => {
+                let mut hue = None;
+                let mut sat = None;
+                let mut bright = None;
+                let mut kelvin = None;
+                for part in s.split(' ') {
+                    let color = part.parse::<Self>()?;
+                    match color {
+                        Hue(h) => {
+                            if hue.replace(h).is_some() {
+                                return Err(MultipleHues);
+                            }
+                        }
+                        Saturation(s) => {
+                            if sat.replace(s).is_some() {
+                                return Err(MultipleSaturations);
+                            }
+                        }
+                        Brightness(b) => {
+                            if bright.replace(b).is_some() {
+                                return Err(MultipleBrightnesses);
+                            }
+                        }
+                        Kelvin(k) => {
+                            if kelvin.replace(k).is_some() {
+                                return Err(MultipleKelvins);
+                            }
+                        }
+                        c => {
+                            return Err(WeirdHsbkComponent(c));
+                        }
+                    }
+                }
+                Ok(Hsbk(hue, sat, bright, kelvin))
+            }
             hue if hue.starts_with("hue:") => {
                 if let Some(spec) = hue.split(':').nth(1) {
                     if spec.trim().is_empty() {
@@ -469,6 +573,15 @@ pub enum Error {
     /// assert_eq!(res, Err(ColorValidationError::KelvinLow(1499)));
     /// ```
     KelvinLow(u16),
+    /// None of hue, saturation, brightness, or color temperature were specified, so this is an
+    /// empty color.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifxi::http::*;
+    /// let res = Color::Hsbk(None, None, None, None).validate();
+    /// assert_eq!(res, Err(ColorValidationError::HsbkEmpty));
+    HsbkEmpty,
     /// The given RGB string was too short.
     ///
     /// ## Examples
@@ -503,6 +616,10 @@ impl fmt::Display for Error {
             Error::BrightnessLow(b) => write!(f, "Brightness {} is negative.", b),
             Error::KelvinHigh(t) => write!(f, "Temperature {} K is too large (max: 9000 K).", t),
             Error::KelvinLow(t) => write!(f, "Temperature {} K is too small (min: 1500 K).", t),
+            Error::HsbkEmpty => write!(
+                f,
+                "No hue, saturation, brightness, or color temperature given."
+            ),
             Error::RgbStrShort(h, s) => write!(
                 f,
                 "RGB string {} is too short ({} chars; expected {}).",
@@ -605,6 +722,25 @@ impl Color {
                 } else if s.len() < 6 {
                     Err(RgbStrShort(false, s.clone()))
                 } else {
+                    Ok(())
+                }
+            }
+            Hsbk(h, s, b, k) => {
+                if h.is_none() && s.is_none() && b.is_none() && k.is_none() {
+                    Err(HsbkEmpty)
+                } else {
+                    if let Some(h) = h {
+                        Color::Hue(*h).validate()?;
+                    }
+                    if let Some(s) = s {
+                        Color::Saturation(*s).validate()?;
+                    }
+                    if let Some(b) = b {
+                        Color::Brightness(*b).validate()?;
+                    }
+                    if let Some(k) = k {
+                        Color::Kelvin(*k).validate()?;
+                    }
                     Ok(())
                 }
             }
@@ -960,6 +1096,11 @@ mod tests {
             assert_eq!(&format!("{}", color), "brightness:0.3");
             let color = Color::Kelvin(3500);
             assert_eq!(&format!("{}", color), "kelvin:3500");
+            let color = Color::Hsbk(Some(240), Some(0.531), Some(0.3), Some(3500));
+            assert_eq!(
+                &format!("{}", color),
+                "hue:240 saturation:0.531 brightness:0.3 kelvin:3500"
+            );
             let color = Color::Rgb([0, 17, 36]);
             assert_eq!(&format!("{}", color), "rgb:0,17,36");
             let color = Color::RgbStr("123456".to_string());
@@ -995,6 +1136,31 @@ mod tests {
             assert_eq!(color, Ok(Color::Brightness(0.3)));
             let color = "kelvin:3500".parse();
             assert_eq!(color, Ok(Color::Kelvin(3500)));
+            let color = "hue:240 saturation:0.531 brightness:0.3 kelvin:3500".parse();
+            assert_eq!(
+                color,
+                Ok(Color::Hsbk(Some(240), Some(0.531), Some(0.3), Some(3500)))
+            );
+            let color = "saturation:0.531 brightness:0.3 kelvin:3500".parse();
+            assert_eq!(
+                color,
+                Ok(Color::Hsbk(None, Some(0.531), Some(0.3), Some(3500)))
+            );
+            let color = "hue:240 brightness:0.3 kelvin:3500".parse();
+            assert_eq!(
+                color,
+                Ok(Color::Hsbk(Some(240), None, Some(0.3), Some(3500)))
+            );
+            let color = "hue:240 saturation:0.531 kelvin:3500".parse();
+            assert_eq!(
+                color,
+                Ok(Color::Hsbk(Some(240), Some(0.531), None, Some(3500)))
+            );
+            let color = "hue:240 saturation:0.531 brightness:0.3".parse();
+            assert_eq!(
+                color,
+                Ok(Color::Hsbk(Some(240), Some(0.531), Some(0.3), None))
+            );
             let color = "rgb:0,17,36".parse();
             assert_eq!(color, Ok(Color::Rgb([0, 17, 36])));
             let color = "#123456".parse();
@@ -1048,6 +1214,30 @@ mod tests {
             assert!(color.validate().is_ok());
             let color = Color::Kelvin(9001);
             assert_eq!(color.validate(), Err(Error::KelvinHigh(9001)));
+            let color = Color::Hsbk(Some(100), Some(0.1), Some(0.4), Some(2000));
+            assert!(color.validate().is_ok());
+            let color = Color::Hsbk(Some(100), None, None, None);
+            assert!(color.validate().is_ok());
+            let color = Color::Hsbk(None, Some(0.1), None, None);
+            assert!(color.validate().is_ok());
+            let color = Color::Hsbk(None, None, Some(0.4), None);
+            assert!(color.validate().is_ok());
+            let color = Color::Hsbk(None, None, None, Some(2000));
+            assert!(color.validate().is_ok());
+            let color = Color::Hsbk(Some(361), Some(0.1), Some(0.4), Some(2000));
+            assert_eq!(color.validate(), Err(Error::Hue(361)));
+            let color = Color::Hsbk(Some(360), Some(1.1), Some(0.4), Some(2000));
+            assert_eq!(color.validate(), Err(Error::SaturationHigh(1.1)));
+            let color = Color::Hsbk(Some(360), Some(-0.1), Some(0.4), Some(2000));
+            assert_eq!(color.validate(), Err(Error::SaturationLow(-0.1)));
+            let color = Color::Hsbk(Some(100), Some(0.1), Some(1.1), Some(2000));
+            assert_eq!(color.validate(), Err(Error::BrightnessHigh(1.1)));
+            let color = Color::Hsbk(Some(100), Some(0.1), Some(-0.1), Some(2000));
+            assert_eq!(color.validate(), Err(Error::BrightnessLow(-0.1)));
+            let color = Color::Hsbk(Some(100), None, None, Some(1499));
+            assert_eq!(color.validate(), Err(Error::KelvinLow(1499)));
+            let color = Color::Hsbk(Some(100), None, None, Some(10_000));
+            assert_eq!(color.validate(), Err(Error::KelvinHigh(10_000)));
             let color = Color::RgbStr("#12345".to_string());
             assert_eq!(
                 color.validate(),
