@@ -4,6 +4,54 @@ use std::str::FromStr;
 
 use serde::{de::Error as DeError, Deserialize, Deserializer, Serialize, Serializer};
 
+/// A struct representing an aggregate of selectors.
+///
+/// Up to 25 selectors may be chained together this way. No validation is performed client-side,
+/// however, so please take care to enforce this limit in consumer code.
+#[derive(Clone, Default)]
+pub struct Selectors {
+    selectors: Vec<String>,
+}
+
+impl Selectors {
+    /// Adds another selector to the chain.
+    ///
+    /// ## Example
+    /// ```
+    /// use lifxi::http::*;
+    /// let foo = Selector::Label("foo".to_string());
+    /// let bar = Selector::Label("bar".to_string());
+    /// let baz = Selector::Label("baz".to_string());
+    /// let combined = foo.combine(bar).combine(baz);
+    /// assert_eq!(&format!("{}", combined), "label:foo,label:bar,label:baz");
+    /// ```
+    #[allow(clippy::needless_pass_by_value)]
+    pub fn combine<T: PureSelect>(mut self, sel: T) -> Self {
+        self.selectors.push(format!("{}", sel));
+        self
+    }
+}
+
+impl fmt::Display for Selectors {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for sel in self.selectors.iter().rev().skip(1).rev() {
+            write!(f, "{},", sel)?;
+        }
+        if let Some(last) = self.selectors.last() {
+            write!(f, "{}", last)?;
+        }
+        Ok(())
+    }
+}
+
+impl Serialize for Selectors {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(&format!("{}", self))
+    }
+}
+
+impl Select for Selectors {}
+
 /// Selectors are used to identify one or more lights belonging to a particular account.
 ///
 /// All resolutions of selectors are treated as sets, even if they are logically a single device,
@@ -344,6 +392,32 @@ where
     /// ```
     fn random(self) -> Random<Self> {
         Random(self)
+    }
+}
+
+/// Enables chaining of non-randomized selectors.
+pub trait Combine<T> {
+    /// Combines two selectors to begin a chain.
+    ///
+    /// ## Examples
+    /// ```
+    /// use lifxi::http::*;
+    /// let foo = Selector::Label("foo".to_string());
+    /// let bar = Selector::Label("bar".to_string());
+    /// let combined = foo.combine(bar);
+    /// assert_eq!(&format!("{}", combined), "label:foo,label:bar");
+    /// let foo = Selector::Label("foo".to_string());
+    /// let bar = Selector::Label("bar".to_string());
+    /// let baz = Selector::Label("baz".to_string());
+    /// let combined = foo.combine(bar).combine(baz);
+    /// assert_eq!(&format!("{}", combined), "label:foo,label:bar,label:baz");
+    /// ```
+    fn combine(self, other: T) -> Selectors;
+}
+
+impl<T: PureSelect, U: PureSelect> Combine<U> for T {
+    fn combine(self, other: U) -> Selectors {
+        Selectors::default().combine(self).combine(other)
     }
 }
 

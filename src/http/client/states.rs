@@ -83,8 +83,10 @@ impl<'a, T: Select> AsRequest<()> for Toggle<'a, T> {
 /// use lifxi::http::*;
 /// # fn run() {
 /// let client = Client::new("foo");
+/// let office = Selector::Label("Office".to_string());
+/// let basement = Selector::Label("Basement".to_string());
 /// let result = client
-///     .select(Selector::All)
+///     .select(office.combine(basement))
 ///     .set_state()
 ///     .power(true)
 ///     .color(Color::Red)
