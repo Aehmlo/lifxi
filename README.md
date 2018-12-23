@@ -1,6 +1,6 @@
 # `lifxi`
 
-[![Build Status](https://travis-ci.com/Aehmlo/lifxi.svg&branch=master)](https://travis-ci.com/Aehmlo/lifxi) [![Crates.io](https://img.shields.io/crates/v/lifx.svg)](https://crates.io/crates/lifxi) [![Documentation](https://docs.rs/lifxi/badge.svg)](https://docs.rs/lifxi)
+[![Build Status](https://travis-ci.com/Aehmlo/lifxi.svg?branch=master)](https://travis-ci.com/Aehmlo/lifxi) [![Crates.io](https://img.shields.io/crates/v/lifxi.svg)](https://crates.io/crates/lifxi) [![Documentation](https://docs.rs/lifxi/badge.svg)](https://docs.rs/lifxi)
 
 Control [LIFX](https://lifx.com) devices over (eventually LAN and) the internet.
 
