@@ -1,8 +1,15 @@
 [package]
 name = "lifxi"
+description = "Control LIFX devices."
 version = "0.1.0"
 authors = ["Alex Hamilton <alex.hamilton@ou.edu>"]
 edition = "2018"
+license = "Apache-2.0/MIT"
+readme = "README.md"
+repository = "https://github.com/Aehmlo/lifxi"
+documentation = "https://docs.rs/lifxi"
+keywords = ["lifx", "light", "bulb", "API", "wrapper"]
+categories = ["api-bindings", "web-programming"]
 
 [dependencies]
 reqwest = "0.9.5"
