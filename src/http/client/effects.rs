@@ -1,5 +1,7 @@
+use std::num::NonZeroU8;
+
 use crate::http::{
-    client::{AsRequest, Client, Selected},
+    client::{unity, AsRequest, Attempts, Client, Selected},
     selector::Select,
     state::{Color, Duration},
 };
@@ -63,6 +65,7 @@ impl<'a, T: Select> BreathePayload<'a, T> {
 pub struct Breathe<'a, T: Select> {
     pub(crate) parent: &'a Selected<'a, T>,
     inner: BreathePayload<'a, T>,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a, T: Select> Breathe<'a, T> {
@@ -70,6 +73,7 @@ impl<'a, T: Select> Breathe<'a, T> {
         Self {
             parent,
             inner: BreathePayload::new(&parent.selector, color),
+            attempts: None,
         }
     }
     /// Sets the starting color.
@@ -190,6 +194,12 @@ impl<'a, T: Select> Breathe<'a, T> {
     }
 }
 
+impl<'a, T: Select> Attempts for Breathe<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a, T: Select> AsRequest<BreathePayload<'a, T>> for Breathe<'a, T> {
     fn method() -> reqwest::Method {
         Method::POST
@@ -202,6 +212,9 @@ impl<'a, T: Select> AsRequest<BreathePayload<'a, T>> for Breathe<'a, T> {
     }
     fn body(&self) -> &'_ BreathePayload<'a, T> {
         &self.inner
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
 
@@ -241,6 +254,7 @@ impl<'a, T: Select> PulsePayload<'a, T> {
 pub struct Pulse<'a, T: Select> {
     parent: &'a Selected<'a, T>,
     inner: PulsePayload<'a, T>,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a, T: Select> Pulse<'a, T> {
@@ -248,6 +262,7 @@ impl<'a, T: Select> Pulse<'a, T> {
         Self {
             parent,
             inner: PulsePayload::new(&parent.selector, color),
+            attempts: None,
         }
     }
     /// Sets the starting color.
@@ -349,6 +364,12 @@ impl<'a, T: Select> Pulse<'a, T> {
     }
 }
 
+impl<'a, T: Select> Attempts for Pulse<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a, T: Select> AsRequest<PulsePayload<'a, T>> for Pulse<'a, T> {
     fn method() -> reqwest::Method {
         Method::POST
@@ -361,5 +382,8 @@ impl<'a, T: Select> AsRequest<PulsePayload<'a, T>> for Pulse<'a, T> {
     }
     fn body(&self) -> &'_ PulsePayload<'a, T> {
         &self.inner
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }

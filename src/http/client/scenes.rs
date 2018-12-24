@@ -1,8 +1,9 @@
 use crate::http::{
-    client::{AsRequest, Client, Request},
+    client::{unity, AsRequest, Attempts, Client, Request},
     state::{Duration, State},
 };
 use reqwest::Method;
+use std::num::NonZeroU8;
 
 /// A waypoint in working with scenes.
 ///
@@ -31,6 +32,7 @@ impl<'a> Scenes<'a> {
             path: "/scenes".to_string(),
             body: (),
             method: Method::GET,
+            attempts: unity(),
         }
     }
     /// Creates a configurable request for activating a specific scene.
@@ -87,6 +89,7 @@ pub struct Activate<'a> {
     parent: &'a Scenes<'a>,
     uuid: String,
     inner: ActivatePayload,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a> Activate<'a> {
@@ -95,6 +98,7 @@ impl<'a> Activate<'a> {
             parent,
             uuid,
             inner: ActivatePayload::default(),
+            attempts: None,
         }
     }
     /// Sets the transition time for the scene activation.
@@ -154,6 +158,12 @@ impl<'a> Activate<'a> {
     }
 }
 
+impl<'a> Attempts for Activate<'a> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a> AsRequest<ActivatePayload> for Activate<'a> {
     fn method() -> reqwest::Method {
         Method::PUT
@@ -166,5 +176,8 @@ impl<'a> AsRequest<ActivatePayload> for Activate<'a> {
     }
     fn body(&self) -> &'_ ActivatePayload {
         &self.inner
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }

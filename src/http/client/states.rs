@@ -1,9 +1,10 @@
 use crate::http::{
-    client::{AsRequest, Client, Request, Selected},
+    client::{unity, AsRequest, Attempts, Client, Request, Selected},
     state::{Color, Duration, Power, State, StateChange},
     Select,
 };
 use reqwest::Method;
+use std::num::NonZeroU8;
 
 /// A scoped request to toggle specific lights which may be further customized.
 ///
@@ -32,11 +33,15 @@ use reqwest::Method;
 /// # }
 pub struct Toggle<'a, T: Select> {
     parent: &'a Selected<'a, T>,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a, T: Select> Toggle<'a, T> {
     pub(crate) fn new(parent: &'a Selected<'a, T>) -> Self {
-        Self { parent }
+        Self {
+            parent,
+            attempts: None,
+        }
     }
     /// Sets the transition time for the toggle.
     ///
@@ -57,7 +62,14 @@ impl<'a, T: Select> Toggle<'a, T> {
             path: format!("/lights/{}/toggle", self.parent.selector),
             body: duration.into(),
             method: Method::POST,
+            attempts: self.attempts.unwrap_or_else(unity),
         }
+    }
+}
+
+impl<'a, T: Select> Attempts for Toggle<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
     }
 }
 
@@ -73,6 +85,9 @@ impl<'a, T: Select> AsRequest<()> for Toggle<'a, T> {
     }
     fn body(&self) -> &'_ () {
         &()
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
 
@@ -98,6 +113,7 @@ impl<'a, T: Select> AsRequest<()> for Toggle<'a, T> {
 /// ```
 pub struct SetState<'a, T: Select> {
     parent: &'a Selected<'a, T>,
+    attempts: Option<NonZeroU8>,
     new: State,
 }
 
@@ -106,6 +122,7 @@ impl<'a, T: Select> SetState<'a, T> {
         Self {
             parent,
             new: State::default(),
+            attempts: None,
         }
     }
     /// Sets the power state of all selected bulbs.
@@ -200,6 +217,12 @@ impl<'a, T: Select> SetState<'a, T> {
     }
 }
 
+impl<'a, T: Select> Attempts for SetState<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a, T: Select> AsRequest<State> for SetState<'a, T> {
     fn method() -> reqwest::Method {
         Method::PUT
@@ -212,6 +235,9 @@ impl<'a, T: Select> AsRequest<State> for SetState<'a, T> {
     }
     fn body(&self) -> &'_ State {
         &self.new
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
 
@@ -253,6 +279,7 @@ pub struct SetStatesPayload {
 pub struct SetStates<'a> {
     parent: &'a Client,
     inner: SetStatesPayload,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a> SetStates<'a> {
@@ -260,6 +287,7 @@ impl<'a> SetStates<'a> {
         Self {
             parent,
             inner: SetStatesPayload::default(),
+            attempts: None,
         }
     }
     /// Adds the given state to the list.
@@ -278,6 +306,12 @@ impl<'a> SetStates<'a> {
     }
 }
 
+impl<'a> Attempts for SetStates<'a> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a> AsRequest<SetStatesPayload> for SetStates<'a> {
     fn method() -> reqwest::Method {
         Method::PUT
@@ -290,6 +324,9 @@ impl<'a> AsRequest<SetStatesPayload> for SetStates<'a> {
     }
     fn body(&self) -> &'_ SetStatesPayload {
         &self.inner
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
 
@@ -316,6 +353,7 @@ impl<'a> AsRequest<SetStatesPayload> for SetStates<'a> {
 pub struct ChangeState<'a, T: Select> {
     parent: &'a Selected<'a, T>,
     change: StateChange,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a, T: Select> ChangeState<'a, T> {
@@ -323,6 +361,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
         Self {
             parent,
             change: StateChange::default(),
+            attempts: None,
         }
     }
     /// Sets target power state.
@@ -457,6 +496,12 @@ impl<'a, T: Select> ChangeState<'a, T> {
     }
 }
 
+impl<'a, T: Select> Attempts for ChangeState<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a, T: Select> AsRequest<StateChange> for ChangeState<'a, T> {
     fn method() -> reqwest::Method {
         Method::POST
@@ -469,6 +514,9 @@ impl<'a, T: Select> AsRequest<StateChange> for ChangeState<'a, T> {
     }
     fn body(&self) -> &'_ StateChange {
         &self.change
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
 
@@ -502,6 +550,7 @@ impl<'a, T: Select> AsRequest<StateChange> for ChangeState<'a, T> {
 pub struct Cycle<'a, T: Select> {
     parent: &'a Selected<'a, T>,
     inner: CyclePayload<'a, T>,
+    attempts: Option<NonZeroU8>,
 }
 
 impl<'a, T: Select> Cycle<'a, T> {
@@ -509,6 +558,7 @@ impl<'a, T: Select> Cycle<'a, T> {
         Self {
             parent,
             inner: CyclePayload::new(&parent.selector),
+            attempts: None,
         }
     }
     /// Adds a state to the cycle.
@@ -554,6 +604,12 @@ impl<'a, T: Select> CyclePayload<'a, T> {
     }
 }
 
+impl<'a, T: Select> Attempts for Cycle<'a, T> {
+    fn set_attempts(&mut self, attempts: NonZeroU8) {
+        self.attempts = Some(attempts);
+    }
+}
+
 impl<'a, T: Select> AsRequest<CyclePayload<'a, T>> for Cycle<'a, T> {
     fn method() -> reqwest::Method {
         Method::POST
@@ -566,5 +622,8 @@ impl<'a, T: Select> AsRequest<CyclePayload<'a, T>> for Cycle<'a, T> {
     }
     fn body(&self) -> &'_ CyclePayload<'a, T> {
         &self.inner
+    }
+    fn attempts(&self) -> NonZeroU8 {
+        self.attempts.unwrap_or_else(unity)
     }
 }
