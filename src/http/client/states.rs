@@ -11,7 +11,7 @@ use std::num::NonZeroU8;
 /// ## Examples
 /// ### Transition
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let result = client
@@ -23,7 +23,7 @@ use std::num::NonZeroU8;
 /// ```
 /// ### Immediate
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let result = client
@@ -47,7 +47,7 @@ impl<'a, T: Select> Toggle<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -105,7 +105,7 @@ pub struct SetStatePayload {
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let office = Selector::Label("Office".to_string());
@@ -139,7 +139,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -157,7 +157,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -175,7 +175,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -193,7 +193,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -211,7 +211,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -229,7 +229,7 @@ impl<'a, T: Select> SetState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -293,7 +293,7 @@ pub struct SetStatesPayload {
 ///
 /// ##Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let red = State::builder().color(Color::Red);
@@ -370,7 +370,7 @@ impl<'a> AsRequest<SetStatesPayload> for SetStates<'a> {
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let result = client
@@ -404,7 +404,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -423,7 +423,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -442,7 +442,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -461,7 +461,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -480,7 +480,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -498,7 +498,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -516,7 +516,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -561,7 +561,7 @@ impl<'a, T: Select> AsRequest<StateChange> for ChangeState<'a, T> {
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// fn client() -> Client {
 ///     // TODO: Add lazy-static dependency and use it to make a shared client.
 ///     unimplemented!()

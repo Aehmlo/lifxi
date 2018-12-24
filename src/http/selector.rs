@@ -18,7 +18,7 @@ impl Selectors {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let foo = Selector::Label("foo".to_string());
     /// let bar = Selector::Label("bar".to_string());
     /// let baz = Selector::Label("baz".to_string());
@@ -117,7 +117,7 @@ pub enum SelectorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let selector = "".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::NoLabel));
     /// ```
@@ -126,7 +126,7 @@ pub enum SelectorParseError {
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let selector = "id:".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::NoValue));
     /// let selector = "id".parse::<Selector>();
@@ -140,7 +140,7 @@ pub enum SelectorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let selector = "foo:1".parse::<Selector>();
     /// assert_eq!(selector, Err(SelectorParseError::UnknownLabel));
     /// ```
@@ -384,7 +384,7 @@ where
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let sel = Selector::Group("Living Room".to_string()).random();
     /// assert_eq!(&format!("{}", sel), "group:Living Room:random");
     /// let sel = Selector::Group("Living Room".to_string()).zoned(1).random();
@@ -401,7 +401,7 @@ pub trait Combine<T> {
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let foo = Selector::Label("foo".to_string());
     /// let bar = Selector::Label("bar".to_string());
     /// let combined = foo.combine(bar);

@@ -18,7 +18,7 @@ impl<'a> Scenes<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let scenes = client
@@ -40,7 +40,7 @@ impl<'a> Scenes<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -77,7 +77,7 @@ pub struct ActivatePayload {
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let result = client
@@ -110,7 +110,7 @@ impl<'a> Activate<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -130,7 +130,7 @@ impl<'a> Activate<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -150,7 +150,7 @@ impl<'a> Activate<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
@@ -168,7 +168,7 @@ impl<'a> Activate<'a> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client

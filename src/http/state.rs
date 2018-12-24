@@ -123,7 +123,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "hue:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoHue));
     /// ```
@@ -132,7 +132,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "hue:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -141,7 +141,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "saturation:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoSaturation));
     /// ```
@@ -150,7 +150,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "saturation:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -159,7 +159,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "brightness:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoBrightness));
     /// ```
@@ -168,7 +168,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "brightness:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -177,7 +177,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "kelvin:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoKelvin));
     /// ```
@@ -186,7 +186,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "kelvin:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -196,7 +196,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "hue:100 rgb:0,0,0".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -205,7 +205,7 @@ pub enum ColorParseError {
     ///
     /// ##
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "hue:100 hue:100".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::MultipleHues));
     /// ```
@@ -214,7 +214,7 @@ pub enum ColorParseError {
     ///
     /// ##
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "saturation:100 saturation:100".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::MultipleSaturations));
     /// ```
@@ -223,7 +223,7 @@ pub enum ColorParseError {
     ///
     /// ##
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "brightness:0.4 brightness:0.4".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::MultipleBrightnesses));
     /// ```
@@ -232,7 +232,7 @@ pub enum ColorParseError {
     ///
     /// ##
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "kelvin:2000 kelvin:2000".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::MultipleKelvins));
     /// ```
@@ -241,7 +241,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoRed));
     /// ```
@@ -250,7 +250,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -259,7 +259,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:0,".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoGreen));
     /// ```
@@ -268,7 +268,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:0,j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -277,7 +277,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:0,1,".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::NoBlue));
     /// ```
@@ -286,7 +286,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "rgb:0,1,j".parse::<Color>();
     /// assert!(color.is_err());
     /// ```
@@ -295,7 +295,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "foo".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::ShortString));
     /// ```
@@ -304,7 +304,7 @@ pub enum ColorParseError {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let color = "foobarbaz".parse::<Color>();
     /// assert_eq!(color, Err(ColorParseError::LongString));
     /// ```
@@ -514,7 +514,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Hue(361).validate();
     /// assert_eq!(res, Err(ColorValidationError::Hue(361)));
     /// ```
@@ -523,7 +523,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Saturation(1.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::SaturationHigh(1.1)));
     /// ```
@@ -532,7 +532,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Saturation(-0.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::SaturationLow(-0.1)));
     /// ```
@@ -541,7 +541,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Brightness(1.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::BrightnessHigh(1.1)));
     /// ```
@@ -550,7 +550,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Brightness(-0.1).validate();
     /// assert_eq!(res, Err(ColorValidationError::BrightnessLow(-0.1)));
     /// ```
@@ -559,7 +559,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Kelvin(9001).validate();
     /// assert_eq!(res, Err(ColorValidationError::KelvinHigh(9001)));
     /// ```
@@ -568,7 +568,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Kelvin(1499).validate();
     /// assert_eq!(res, Err(ColorValidationError::KelvinLow(1499)));
     /// ```
@@ -578,7 +578,7 @@ pub enum Error {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::Hsbk(None, None, None, None).validate();
     /// assert_eq!(res, Err(ColorValidationError::HsbkEmpty));
     HsbkEmpty,
@@ -586,7 +586,7 @@ pub enum Error {
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::RgbStr("12345".to_string()).validate();
     /// assert_eq!(res, Err(ColorValidationError::RgbStrShort(false, "12345".to_string())));
     /// let res = Color::RgbStr("#12345".to_string()).validate();
@@ -597,7 +597,7 @@ pub enum Error {
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let res = Color::RgbStr("1234567".to_string()).validate();
     /// assert_eq!(res, Err(ColorValidationError::RgbStrLong(false, "1234567".to_string())));
     /// let res = Color::RgbStr("#1234567".to_string()).validate();

@@ -46,7 +46,7 @@ impl<'a, T: Select> BreathePayload<'a, T> {
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let secret = "foo";
 /// let client = Client::new(secret);
@@ -82,7 +82,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -101,7 +101,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -120,7 +120,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -139,7 +139,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -158,7 +158,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -177,7 +177,7 @@ impl<'a, T: Select> Breathe<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -271,7 +271,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -290,7 +290,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -309,7 +309,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -328,7 +328,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -347,7 +347,7 @@ impl<'a, T: Select> Pulse<'a, T> {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);

@@ -18,6 +18,29 @@ pub use self::effects::*;
 pub use self::scenes::*;
 pub use self::states::*;
 
+/// Contains useful utilities for working with the LIFX HTTP API.
+///
+/// Use the prelude to maintain the convenience of glob importing without overly polluting the namespace.
+///
+/// ## Usage
+/// ```
+/// use lifxi::http::prelude::*;
+/// ```
+pub mod prelude {
+    pub use crate::http::Client;
+    pub use crate::http::Color;
+    pub use crate::http::ColorParseError;
+    pub use crate::http::ColorValidationError;
+    pub use crate::http::Combine;
+    pub use crate::http::Randomize;
+    pub use crate::http::Retry;
+    pub use crate::http::Selector;
+    pub use crate::http::SelectorParseError;
+    pub use crate::http::Send;
+    pub use crate::http::State;
+    pub use crate::http::StateChange;
+}
+
 /// Trait enabling conversion of non-terminal request builders to requests.
 pub trait AsRequest<S: Serialize> {
     /// The HTTP verb to be used.
@@ -42,7 +65,7 @@ pub type ClientResult = Result<reqwest::Response, Error>;
 ///
 /// ## Example
 /// ```
-/// use lifxi::http::*;
+/// use lifxi::http::prelude::*;
 /// # fn run() {
 /// let client = Client::new("foo");
 /// let result = client
@@ -64,7 +87,7 @@ impl Client {
     ///
     /// ## Examples
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// let secret = "foo";
     /// let client = Client::new(secret);
     /// let secret = "foo".to_string();
@@ -98,7 +121,7 @@ impl Client {
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let secret = "foo";
     /// let client = Client::new(secret);
@@ -358,7 +381,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -380,7 +403,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -401,7 +424,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -424,7 +447,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -446,7 +469,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let lights = client
@@ -471,7 +494,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// fn client() -> Client {
     ///     // TODO: Add lazy-static dependency and use it to make a shared client.
     ///     unimplemented!()
@@ -505,7 +528,7 @@ where
     ///
     /// ## Example
     /// ```
-    /// use lifxi::http::*;
+    /// use lifxi::http::prelude::*;
     /// # fn run() {
     /// let client = Client::new("foo");
     /// let result = client
