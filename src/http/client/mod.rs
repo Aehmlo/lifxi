@@ -1,3 +1,4 @@
+use std::fmt;
 use std::num::NonZeroU8;
 use std::string::ToString;
 use std::time::{Duration, Instant, SystemTime};
@@ -155,6 +156,7 @@ impl Client {
 /// client errors. If a client error occurs, we map it to a user-friendly error variant; if another
 /// error occurs, we just wrap it and return it. This means that errors stemming from your mistakes
 /// are easier to diagnose than errors from the middleware stack.
+#[derive(Debug)]
 pub enum Error {
     /// The API is enforcing a rate limit. The associated value is the time at which the rate limit
     /// will be lifted, if it was specified.
@@ -230,6 +232,39 @@ impl From<reqwest::Error> for Error {
         }
     }
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        use self::Error::*;
+        match self {
+            RateLimited(t) => {
+                if let Some(time) = t {
+                    write!(f, "Rate-limited until instant {:?}.", time)
+                } else {
+                    write!(f, "Rate-limited.")
+                }
+            }
+            BadRequest => write!(f, "Bad request."),
+            BadAccessToken => write!(f, "Bad access token."),
+            BadOAuthScope => write!(f, "Bad OAuth scope."),
+            NotFound(s) => {
+                if let Some(url) = s {
+                    write!(f, "Bad URL: {}", url)
+                } else {
+                    write!(f, "Bad URL.")
+                }
+            }
+            Server(_, e) => write!(f, "Server error: {}", e),
+            Http(e) => write!(f, "HTTP error: {}", e),
+            Serialization(e) => write!(f, "Serialization error: {}", e),
+            Redirect(e) => write!(f, "Redirect error: {}", e),
+            Client(_, e) => write!(f, "Client error: {}", e),
+            Other(e) => write!(f, "{}", e),
+        }
+    }
+}
+
+impl ::std::error::Error for Error {}
 
 /// Represents a terminal request.
 ///
