@@ -91,6 +91,16 @@ impl<'a, T: Select> AsRequest<()> for Toggle<'a, T> {
     }
 }
 
+/// A payload for setting a state.
+#[doc(hidden)]
+#[derive(Default, Serialize)]
+pub struct SetStatePayload {
+    #[serde(flatten)]
+    state: State,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fast: Option<bool>,
+}
+
 /// A scoped request to uniformly set the state for all selected bulbs.
 ///
 /// ## Example
@@ -114,14 +124,14 @@ impl<'a, T: Select> AsRequest<()> for Toggle<'a, T> {
 pub struct SetState<'a, T: Select> {
     parent: &'a Selected<'a, T>,
     attempts: Option<NonZeroU8>,
-    new: State,
+    payload: SetStatePayload,
 }
 
 impl<'a, T: Select> SetState<'a, T> {
     pub(crate) fn new(parent: &'a Selected<'a, T>) -> Self {
         Self {
             parent,
-            new: State::default(),
+            payload: SetStatePayload::default(),
             attempts: None,
         }
     }
@@ -139,8 +149,8 @@ impl<'a, T: Select> SetState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn power<P: Into<Power>>(&'a mut self, on: P) -> &'a mut SetState<'a, T> {
-        self.new.power = Some(on.into());
+    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut SetState<'a, T> {
+        self.payload.state.power = Some(on.into());
         self
     }
     /// Sets the color of all selected bulbs.
@@ -157,8 +167,8 @@ impl<'a, T: Select> SetState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn color(&'a mut self, color: Color) -> &'a mut SetState<'a, T> {
-        self.new.color = Some(color);
+    pub fn color(&mut self, color: Color) -> &'_ mut SetState<'a, T> {
+        self.payload.state.color = Some(color);
         self
     }
     /// Sets the brightness of all selected bulbs (overriding color settings).
@@ -175,8 +185,8 @@ impl<'a, T: Select> SetState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn brightness(&'a mut self, brightness: f32) -> &'a mut SetState<'a, T> {
-        self.new.brightness = Some(brightness);
+    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
+        self.payload.state.brightness = Some(brightness);
         self
     }
     /// Sets the transition time (duration) for the change.
@@ -193,8 +203,8 @@ impl<'a, T: Select> SetState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn transition<D: Into<Duration>>(&'a mut self, duration: D) -> &'a mut SetState<'a, T> {
-        self.new.duration = Some(duration.into());
+    pub fn transition<D: Into<Duration>>(&mut self, duration: D) -> &'_ mut Self {
+        self.payload.state.duration = Some(duration.into());
         self
     }
     /// Sets the infrared level, if applicable.
@@ -211,8 +221,27 @@ impl<'a, T: Select> SetState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn infrared(&'a mut self, ir: f32) -> &'a mut SetState<'a, T> {
-        self.new.infrared = Some(ir);
+    pub fn infrared(&mut self, ir: f32) -> &'_ mut Self {
+        self.payload.state.infrared = Some(ir);
+        self
+    }
+    /// Sets whether to perform the action quickly (skipping checks and verification).
+    ///
+    /// ## Example
+    /// ```
+    /// use lifxi::http::*;
+    /// # fn run() {
+    /// let client = Client::new("foo");
+    /// let result = client
+    ///     .select(Selector::All)
+    ///     .set_state()
+    ///     .infrared(0.3)
+    ///     .fast(true)
+    ///     .send();
+    /// # }
+    /// ```
+    pub fn fast(&mut self, quickly: bool) -> &'_ mut Self {
+        self.payload.fast = Some(quickly);
         self
     }
 }
@@ -223,7 +252,7 @@ impl<'a, T: Select> Attempts for SetState<'a, T> {
     }
 }
 
-impl<'a, T: Select> AsRequest<State> for SetState<'a, T> {
+impl<'a, T: Select> AsRequest<SetStatePayload> for SetState<'a, T> {
     fn method() -> reqwest::Method {
         Method::PUT
     }
@@ -233,8 +262,8 @@ impl<'a, T: Select> AsRequest<State> for SetState<'a, T> {
     fn path(&self) -> String {
         format!("/lights/{}/state", self.parent.selector)
     }
-    fn body(&self) -> &'_ State {
-        &self.new
+    fn body(&self) -> &'_ SetStatePayload {
+        &self.payload
     }
     fn attempts(&self) -> NonZeroU8 {
         self.attempts.unwrap_or_else(unity)
@@ -256,6 +285,8 @@ pub struct SetStatesPayload {
     new: Vec<StateExt>,
     #[serde(rename = "defaults", skip_serializing_if = "Option::is_none")]
     default: Option<State>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fast: Option<bool>,
 }
 
 /// A scoped request to uniformly set the state for all selected bulbs.
@@ -302,6 +333,11 @@ impl<'a> SetStates<'a> {
     /// Sets the default properties to use if left unspecified.
     pub fn default(&mut self, state: State) -> &'_ mut Self {
         self.inner.default = Some(state);
+        self
+    }
+    /// Sets whether to perform the action quickly (skipping checks and verification).
+    pub fn fast(&mut self, fast: bool) -> &'_ mut Self {
+        self.inner.fast = Some(fast);
         self
     }
 }
@@ -379,7 +415,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn power<P: Into<Power>>(&'a mut self, on: P) -> &'a mut Self {
+    pub fn power<P: Into<Power>>(&mut self, on: P) -> &'_ mut Self {
         self.change.power = Some(on.into());
         self
     }
@@ -398,7 +434,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn transition<D: Into<Duration>>(&'a mut self, duration: D) -> &'a mut Self {
+    pub fn transition<D: Into<Duration>>(&mut self, duration: D) -> &'_ mut Self {
         self.change.duration = Some(duration.into());
         self
     }
@@ -417,7 +453,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn hue(&'a mut self, hue: i16) -> &'a mut Self {
+    pub fn hue(&mut self, hue: i16) -> &'_ mut Self {
         self.change.hue = Some(hue);
         self
     }
@@ -436,7 +472,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn saturation(&'a mut self, saturation: f32) -> &'a mut Self {
+    pub fn saturation(&mut self, saturation: f32) -> &'_ mut Self {
         self.change.saturation = Some(saturation);
         self
     }
@@ -454,7 +490,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn brightness(&'a mut self, brightness: f32) -> &'a mut Self {
+    pub fn brightness(&mut self, brightness: f32) -> &'_ mut Self {
         self.change.brightness = Some(brightness);
         self
     }
@@ -472,7 +508,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn kelvin(&'a mut self, temp: i16) -> &'a mut Self {
+    pub fn kelvin(&mut self, temp: i16) -> &'_ mut Self {
         self.change.kelvin = Some(temp);
         self
     }
@@ -490,7 +526,7 @@ impl<'a, T: Select> ChangeState<'a, T> {
     ///     .send();
     /// # }
     /// ```
-    pub fn infrared(&'a mut self, ir: f32) -> &'a mut Self {
+    pub fn infrared(&mut self, ir: f32) -> &'_ mut Self {
         self.change.infrared = Some(ir);
         self
     }

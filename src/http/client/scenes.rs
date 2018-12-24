@@ -26,6 +26,7 @@ impl<'a> Scenes<'a> {
     ///     .list()
     ///     .send();
     /// # }
+    /// ```
     pub fn list(&'a self) -> Request<'a, ()> {
         Request {
             client: self.client,
@@ -51,6 +52,7 @@ impl<'a> Scenes<'a> {
     ///     .overwrite(State::builder().power(true))
     ///     .send();
     /// # }
+    /// ```
     #[allow(clippy::needless_pass_by_value)]
     pub fn activate<S: ToString>(&'a self, uuid: S) -> Activate<'a> {
         Activate::new(self, uuid.to_string())
@@ -67,6 +69,8 @@ pub struct ActivatePayload {
     ignore: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     overrides: Option<State>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    fast: Option<bool>,
 }
 
 /// A configurable request for activating a specified scene.
@@ -85,6 +89,7 @@ pub struct ActivatePayload {
 ///     .overwrite(State::builder().power(true))
 ///     .send();
 /// # }
+/// ```
 pub struct Activate<'a> {
     parent: &'a Scenes<'a>,
     uuid: String,
@@ -114,7 +119,8 @@ impl<'a> Activate<'a> {
     ///     .transition(::std::time::Duration::new(7, 0))
     ///     .send();
     /// # }
-    pub fn transition<D: Into<Duration>>(&'a mut self, transition: D) -> &'a mut Self {
+    /// ```
+    pub fn transition<D: Into<Duration>>(&mut self, transition: D) -> &'_ mut Self {
         self.inner.transition = Some(transition.into());
         self
     }
@@ -134,8 +140,9 @@ impl<'a> Activate<'a> {
     ///     .ignore("saturation")
     ///     .send();
     /// # }
+    /// ```
     #[allow(clippy::needless_pass_by_value)]
-    pub fn ignore(&'a mut self, s: impl ToString) -> &'a mut Self {
+    pub fn ignore(&mut self, s: impl ToString) -> &'_ mut Self {
         self.inner.ignore.push(s.to_string());
         self
     }
@@ -152,8 +159,28 @@ impl<'a> Activate<'a> {
     ///     .overwrite(State::builder().power(true))
     ///     .send();
     /// # }
-    pub fn overwrite(&'a mut self, state: State) -> &'a mut Self {
+    /// ```
+    pub fn overwrite(&mut self, state: State) -> &'_ mut Self {
         self.inner.overrides = Some(state);
+        self
+    }
+    /// Sets whether to perform the action quickly (skipping checks and verification).
+    ///
+    /// ## Example
+    /// ```
+    /// use lifxi::http::*;
+    /// # fn run() {
+    /// let client = Client::new("foo");
+    /// let result = client
+    ///     .scenes()
+    ///     .activate("asdf")
+    ///     .overwrite(State::builder().power(true))
+    ///     .fast(true)
+    ///     .send();
+    /// # }
+    /// ```
+    pub fn fast(&mut self, fast: bool) -> &'_ mut Self {
+        self.inner.fast = Some(fast);
         self
     }
 }
